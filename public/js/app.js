@@ -1,4 +1,4 @@
-// Client Application Logic for Survey Application (Vanilla JS)
+// Client Application Logic for Survey Application (Vanilla JS - Light Theme)
 document.addEventListener("DOMContentLoaded", () => {
   // --- DOM Elements ---
   const selectMall = document.getElementById("selectMall");
@@ -91,7 +91,6 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadDimensions() {
     showSpinner(true);
     try {
-      // Client view: loads only active items
       const res = await fetch("/api/dimensions");
       if (!res.ok) throw new Error("Failed to load dimensions");
       const data = await res.json();
@@ -406,7 +405,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const choiceId = parseInt(input.dataset.choiceId || "0", 10);
       const val = parseInt(input.value, 10) || 0;
 
-      // Send all, backend will filter out val = 0
       details.push({ brandId, answerChoiceId: choiceId, value: val });
     });
 
@@ -430,7 +428,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       showToast("🎉 บันทึกข้อมูลแบบสำรวจสำเร็จเรียบร้อย! ระบบนำท่านกลับสู่หน้าแรก", "success");
       
-      // Requirement 1: After submit, app goes back to landing page
       resetToLandingPage();
 
     } catch (err) {
@@ -520,7 +517,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Requirement 5: Admin browse data summarized 1 line per survey/user
   async function loadAdminSurveys() {
     showSpinner(true);
     try {
@@ -557,7 +553,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${row.user || "user"}</td>
           <td>${row.phone || "-"}</td>
           <td>${lastUpdateStr}</td>
-          <td style="font-weight: bold; color: var(--accent); text-align: center;">${row.total_pc ?? 0} คน</td>
+          <td style="font-weight: bold; color: var(--haier-blue); text-align: center;">${row.total_pc ?? 0} คน</td>
           <td style="font-size: 0.8rem; color: var(--text-main);">${row.summary || '<span style="color:var(--text-muted)">ไม่มีพนักงาน PC</span>'}</td>
           <td>
             <button class="btn btn-danger btn-delete-survey" data-survey-id="${row.survey_id}" style="padding: 4px 8px; font-size: 0.75rem;">
@@ -598,7 +594,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Requirement 3: Admin page can browse all dimension and set active/inactive
   async function loadAdminDimensions() {
     showSpinner(true);
     try {
@@ -644,8 +639,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const statusBadge = isActive
-        ? '<span style="color: var(--accent); background: rgba(16,185,129,0.15); padding: 4px 10px; border-radius: 12px; font-weight:600;">Active (เปิดใช้งาน)</span>'
-        : '<span style="color: var(--danger); background: rgba(239,68,68,0.15); padding: 4px 10px; border-radius: 12px; font-weight:600;">Inactive (ปิดใช้งาน)</span>';
+        ? '<span style="color: #0284c7; background: #e0f2fe; padding: 4px 10px; border-radius: 12px; font-weight:600;">Active (เปิดใช้งาน)</span>'
+        : '<span style="color: #ef4444; background: #fee2e2; padding: 4px 10px; border-radius: 12px; font-weight:600;">Inactive (ปิดใช้งาน)</span>';
 
       const toggleBtnText = isActive ? "🔴 ปิดใช้งาน (Disable)" : "🟢 เปิดใช้งาน (Enable)";
       const toggleBtnClass = isActive ? "btn-danger" : "btn-accent";
@@ -683,8 +678,8 @@ document.addEventListener("DOMContentLoaded", () => {
           const data = await res.json();
           if (res.ok && data.success) {
             showToast(`อัปเดตสถานะ Active/Inactive สำเร็จ`, "success");
-            loadDimensions(); // Refresh client view
-            loadAdminDimensions(); // Refresh admin view
+            loadDimensions();
+            loadAdminDimensions();
           } else {
             showToast("อัปเดตไม่สำเร็จ: " + data.error, "error");
           }
