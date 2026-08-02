@@ -2,6 +2,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   // --- DOM Elements ---
   const btnThemeToggle = document.getElementById("btnThemeToggle");
+  const btnAdminThemeToggle = document.getElementById("btnAdminThemeToggle");
 
   const selectMall = document.getElementById("selectMall");
   const selectRegion = document.getElementById("selectRegion");
@@ -84,18 +85,19 @@ document.addEventListener("DOMContentLoaded", () => {
     currentTheme = theme;
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("haier-survey-theme", theme);
-    if (btnThemeToggle) {
-      btnThemeToggle.innerHTML = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
-    }
+    const btnText = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
+    if (btnThemeToggle) btnThemeToggle.innerHTML = btnText;
+    if (btnAdminThemeToggle) btnAdminThemeToggle.innerHTML = btnText;
   }
 
-  if (btnThemeToggle) {
-    btnThemeToggle.addEventListener("click", () => {
-      const nextTheme = currentTheme === "dark" ? "light" : "dark";
-      applyTheme(nextTheme);
-      showToast(`สลับใช้งาน ${nextTheme === "dark" ? "โหมดมืด (Dark Mode)" : "โหมดสว่าง (Light Mode)"}`, "info");
-    });
+  function handleThemeToggleClick() {
+    const nextTheme = currentTheme === "dark" ? "light" : "dark";
+    applyTheme(nextTheme);
+    showToast(`สลับใช้งาน ${nextTheme === "dark" ? "โหมดมืด (Dark Mode)" : "โหมดสว่าง (Light Mode)"}`, "info");
   }
+
+  if (btnThemeToggle) btnThemeToggle.addEventListener("click", handleThemeToggleClick);
+  if (btnAdminThemeToggle) btnAdminThemeToggle.addEventListener("click", handleThemeToggleClick);
 
   // --- Utility Functions ---
   function showSpinner(show = true) {
@@ -495,6 +497,10 @@ document.addEventListener("DOMContentLoaded", () => {
         adminAuthSection.style.display = "none";
         adminDashboardSection.style.display = "block";
         showToast("เข้าสู่ระบบ Admin สำเร็จ", "success");
+        
+        // Ensure default active tab is Executive Dashboard (tabExecutiveStats)
+        activateTab("tabExecutiveStats");
+
         loadExecutiveDashboardStats();
         loadAdminSurveys();
         loadAdminDimensions();
@@ -512,15 +518,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const tabBtns = document.querySelectorAll(".tab-btn");
   tabBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
-      tabBtns.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-
       const targetTab = btn.getAttribute("data-tab");
-      document.querySelectorAll(".tab-content").forEach((tc) => tc.classList.remove("active"));
-      const activeContent = document.getElementById(targetTab);
-      if (activeContent) activeContent.classList.add("active");
+      if (targetTab) activateTab(targetTab);
     });
   });
+
+  function activateTab(tabId) {
+    tabBtns.forEach((b) => {
+      if (b.getAttribute("data-tab") === tabId) b.classList.add("active");
+      else b.classList.remove("active");
+    });
+
+    document.querySelectorAll(".tab-content").forEach((tc) => tc.classList.remove("active"));
+    const activeContent = document.getElementById(tabId);
+    if (activeContent) activeContent.classList.add("active");
+
+    if (tabId === "tabExecutiveStats") {
+      loadExecutiveDashboardStats();
+    }
+  }
 
   // --- Executive Dashboard Stats & Visual Charts ---
   async function loadExecutiveDashboardStats() {
