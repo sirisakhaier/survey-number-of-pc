@@ -82,7 +82,7 @@ export default {
         });
       }
 
-      // 2. GET /api/stores - Returns store dimensions
+      // 2. GET /api/stores
       if (method === "GET" && path === "/api/stores") {
         const includeInactive = url.searchParams.get("includeInactive") === "true";
         const whereClause = includeInactive ? "" : "WHERE is_active = 1";
@@ -120,7 +120,7 @@ export default {
         });
       }
 
-      // 4. POST /api/survey - Create or Update Survey (Filters out 0 values)
+      // 4. POST /api/survey - Save survey (filter out 0 values)
       if (method === "POST" && path === "/api/survey") {
         const body: any = await request.json();
         const { storeId, user, phone, details } = body;
@@ -157,7 +157,7 @@ export default {
           "DELETE FROM survey_detail WHERE survey_id = ?"
         ).bind(surveyId).run();
 
-        // Batch insert ONLY details with value > 0 (removes 0 answers to save storage)
+        // Insert ONLY details with value > 0
         const statements = [];
         for (const item of details) {
           const brandId = parseInt(item.brandId, 10);
@@ -191,7 +191,54 @@ export default {
         }
       }
 
-      // 6. POST /api/admin/dimension/toggle - Toggle active/inactive state
+      // 6. GET /api/admin/stats - Executive Summary & Dashboard Charts Data
+      if (method === "GET" && path === "/api/admin/stats") {
+        const totalStoresRes: any = await env.DB.prepare("SELECT COUNT(*) as count FROM stores WHERE is_active = 1").first();
+        const totalSurveysRes: any = await env.DB.prepare("SELECT COUNT(*) as count FROM survey_header").first();
+        const totalPcRes: any = await env.DB.prepare("SELECT COALESCE(SUM(value), 0) as total FROM survey_detail WHERE value > 0").first();
+
+        // PC Count by Brand
+        const byBrandRes = await env.DB.prepare(`
+          SELECT b.id, b.name, COALESCE(SUM(sd.value), 0) as total_pc
+          FROM brands b
+          LEFT JOIN survey_detail sd ON b.id = sd.brand_id AND sd.value > 0
+          WHERE b.is_active = 1
+          GROUP BY b.id, b.name
+          ORDER BY total_pc DESC, b.name
+        `).all();
+
+        // PC Count by PC Choice / Employment Type
+        const byChoiceRes = await env.DB.prepare(`
+          SELECT ac.id, ac.name, COALESCE(SUM(sd.value), 0) as total_pc
+          FROM answer_choices ac
+          LEFT JOIN survey_detail sd ON ac.id = sd.answer_choice_id AND sd.value > 0
+          WHERE ac.is_active = 1
+          GROUP BY ac.id, ac.name
+          ORDER BY ac.id
+        `).all();
+
+        // PC Count by Region
+        const byRegionRes = await env.DB.prepare(`
+          SELECT s.region, COUNT(DISTINCT sh.id) as survey_count, COALESCE(SUM(sd.value), 0) as total_pc
+          FROM stores s
+          LEFT JOIN survey_header sh ON s.id = sh.store_id
+          LEFT JOIN survey_detail sd ON sh.id = sd.survey_id AND sd.value > 0
+          WHERE s.is_active = 1
+          GROUP BY s.region
+          ORDER BY total_pc DESC
+        `).all();
+
+        return jsonResponse({
+          totalStores: totalStoresRes?.count || 0,
+          totalSurveys: totalSurveysRes?.count || 0,
+          totalPC: totalPcRes?.total || 0,
+          byBrand: byBrandRes.results || [],
+          byChoice: byChoiceRes.results || [],
+          byRegion: byRegionRes.results || [],
+        });
+      }
+
+      // 7. POST /api/admin/dimension/toggle
       if (method === "POST" && path === "/api/admin/dimension/toggle") {
         const body: any = await request.json();
         const { dimension, id, isActive } = body;
@@ -216,7 +263,7 @@ export default {
         return jsonResponse({ success: true, dimension: table, id, isActive: activeVal === 1 });
       }
 
-      // 7. POST /api/admin/import/stores
+      // 8. POST /api/admin/import/stores
       if (method === "POST" && path === "/api/admin/import/stores") {
         const csvText = await request.text();
         const lines = csvText.split(/\r?\n/).filter((l) => l.trim().length > 0);
@@ -246,7 +293,7 @@ export default {
         return jsonResponse({ success: true, imported: batch.length });
       }
 
-      // 8. POST /api/admin/import/brands
+      // 9. POST /api/admin/import/brands
       if (method === "POST" && path === "/api/admin/import/brands") {
         const csvText = await request.text();
         const lines = csvText.split(/\r?\n/).filter((l) => l.trim().length > 0);
@@ -272,7 +319,7 @@ export default {
         return jsonResponse({ success: true, imported });
       }
 
-      // 9. POST /api/admin/import/answers
+      // 10. POST /api/admin/import/answers
       if (method === "POST" && path === "/api/admin/import/answers") {
         const csvText = await request.text();
         const lines = csvText.split(/\r?\n/).filter((l) => l.trim().length > 0);
@@ -298,7 +345,7 @@ export default {
         return jsonResponse({ success: true, imported });
       }
 
-      // 10. POST /api/admin/reset-dimensions
+      // 11. POST /api/admin/reset-dimensions
       if (method === "POST" && path === "/api/admin/reset-dimensions") {
         await env.DB.batch([
           env.DB.prepare("DELETE FROM survey_detail"),
@@ -310,7 +357,7 @@ export default {
         return jsonResponse({ success: true, message: "All dimensions and surveys reset" });
       }
 
-      // 11. GET /api/admin/surveys - Browse surveys (Summarized 1 row per survey header/user)
+      // 12. GET /api/admin/surveys (1 line per survey/user)
       if (method === "GET" && path === "/api/admin/surveys") {
         const regionFilter = url.searchParams.get("region");
         const storeFilter = url.searchParams.get("storeId");
@@ -359,7 +406,7 @@ export default {
         return jsonResponse({ results: results || [] });
       }
 
-      // 12. GET /api/admin/export - CSV Export (Summarized per store / user)
+      // 13. GET /api/admin/export
       if (method === "GET" && path === "/api/admin/export") {
         const query = `
           SELECT 
@@ -411,7 +458,7 @@ export default {
         });
       }
 
-      // 13. DELETE /api/admin/survey/:surveyId
+      // 14. DELETE /api/admin/survey/:surveyId
       if (method === "DELETE" && path.startsWith("/api/admin/survey/")) {
         const surveyIdStr = path.replace("/api/admin/survey/", "");
         const surveyId = parseInt(surveyIdStr, 10);
@@ -425,7 +472,7 @@ export default {
         return jsonResponse({ success: true, message: "Survey deleted successfully" });
       }
 
-      // 14. DELETE /api/admin/clear - Clear all survey data
+      // 15. DELETE /api/admin/clear
       if (method === "DELETE" && path === "/api/admin/clear") {
         await env.DB.batch([
           env.DB.prepare("DELETE FROM survey_detail"),

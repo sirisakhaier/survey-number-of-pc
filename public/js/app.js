@@ -1,4 +1,4 @@
-// Client Application Logic for Survey Application (Light & Dark Theme Toggle)
+// Client Application Logic for Survey Application (Full-Screen Admin Workspace & Executive Dashboard)
 document.addEventListener("DOMContentLoaded", () => {
   // --- DOM Elements ---
   const btnThemeToggle = document.getElementById("btnThemeToggle");
@@ -24,14 +24,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnSaveSurvey = document.getElementById("btnSaveSurvey");
   const btnClearMatrix = document.getElementById("btnClearMatrix");
 
-  // Admin Modal Elements
+  // Admin Fullscreen Workspace Elements
   const btnAdminTrigger = document.getElementById("btnAdminTrigger");
-  const modalAdmin = document.getElementById("modalAdmin");
-  const btnCloseAdminModal = document.getElementById("btnCloseAdminModal");
+  const viewAdmin = document.getElementById("viewAdmin");
+  const btnAdminLogout = document.getElementById("btnAdminLogout");
   const adminAuthSection = document.getElementById("adminAuthSection");
   const adminDashboardSection = document.getElementById("adminDashboardSection");
   const inputAdminPassword = document.getElementById("inputAdminPassword");
   const btnAdminLogin = document.getElementById("btnAdminLogin");
+
+  // Executive Dashboard Elements
+  const statTotalSurveys = document.getElementById("statTotalSurveys");
+  const statStoreRatio = document.getElementById("statStoreRatio");
+  const statTotalPC = document.getElementById("statTotalPC");
+  const statActiveRegions = document.getElementById("statActiveRegions");
+  const statActiveBrands = document.getElementById("statActiveBrands");
 
   const filterAdminRegion = document.getElementById("filterAdminRegion");
   const filterAdminStore = document.getElementById("filterAdminStore");
@@ -54,6 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const spinnerOverlay = document.getElementById("spinnerOverlay");
   const toastContainer = document.getElementById("toastContainer");
+
+  // --- Chart Instances ---
+  let chartBrandInstance = null;
+  let chartChoiceInstance = null;
+  let chartRegionInstance = null;
 
   // --- State Variables ---
   let allStores = [];
@@ -283,7 +295,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Matrix Grid Render & Calculation ---
   function renderMatrixGrid() {
-    // Header Row
     matrixHeaderRow.innerHTML = "<th>แบรนด์ (Brand)</th>";
     allAnswerChoices.forEach((choice) => {
       const th = document.createElement("th");
@@ -294,7 +305,6 @@ document.addEventListener("DOMContentLoaded", () => {
     thTotal.textContent = "รวม (Total)";
     matrixHeaderRow.appendChild(thTotal);
 
-    // Body Rows
     matrixBody.innerHTML = "";
     allBrands.forEach((brand) => {
       const tr = document.createElement("tr");
@@ -334,7 +344,6 @@ document.addEventListener("DOMContentLoaded", () => {
       matrixBody.appendChild(tr);
     });
 
-    // Footer Row (Column Totals)
     matrixFooter.innerHTML = "";
     const trFoot = document.createElement("tr");
     const tdFootLabel = document.createElement("td");
@@ -364,7 +373,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function calculateMatrixTotals() {
     let grandTotal = 0;
 
-    // Row totals
     allBrands.forEach((brand) => {
       let rowSum = 0;
       const inputs = document.querySelectorAll(
@@ -380,7 +388,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (lblRowTotal) lblRowTotal.textContent = rowSum.toString();
     });
 
-    // Column totals
     allAnswerChoices.forEach((choice) => {
       let colSum = 0;
       const inputs = document.querySelectorAll(
@@ -450,7 +457,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       showToast("🎉 บันทึกข้อมูลแบบสำรวจสำเร็จเรียบร้อย! ระบบนำท่านกลับสู่หน้าแรก", "success");
-      
       resetToLandingPage();
 
     } catch (err) {
@@ -460,13 +466,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- Admin Modal & Actions ---
+  // --- Full-Screen Admin Workspace Actions ---
   btnAdminTrigger.addEventListener("click", () => {
-    modalAdmin.classList.add("active");
+    viewAdmin.style.display = "flex";
   });
 
-  btnCloseAdminModal.addEventListener("click", () => {
-    modalAdmin.classList.remove("active");
+  btnAdminLogout.addEventListener("click", () => {
+    viewAdmin.style.display = "none";
+    adminDashboardSection.style.display = "none";
+    adminAuthSection.style.display = "block";
+    inputAdminPassword.value = "";
   });
 
   btnAdminLogin.addEventListener("click", async () => {
@@ -486,6 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
         adminAuthSection.style.display = "none";
         adminDashboardSection.style.display = "block";
         showToast("เข้าสู่ระบบ Admin สำเร็จ", "success");
+        loadExecutiveDashboardStats();
         loadAdminSurveys();
         loadAdminDimensions();
       } else {
@@ -511,6 +521,137 @@ document.addEventListener("DOMContentLoaded", () => {
       if (activeContent) activeContent.classList.add("active");
     });
   });
+
+  // --- Executive Dashboard Stats & Visual Charts ---
+  async function loadExecutiveDashboardStats() {
+    try {
+      const res = await fetch("/api/admin/stats");
+      if (!res.ok) return;
+      const data = await res.json();
+
+      statTotalSurveys.textContent = `${data.totalSurveys || 0} สาขา`;
+      const ratio = (((data.totalSurveys || 0) / (data.totalStores || 1058)) * 100).toFixed(1);
+      statStoreRatio.textContent = `จากทั้งหมด ${data.totalStores || 1058} สาขา (${ratio}%)`;
+
+      statTotalPC.textContent = `${data.totalPC || 0} คน`;
+
+      const activeRegionsCount = (data.byRegion || []).filter((r) => r.total_pc > 0 || r.survey_count > 0).length;
+      statActiveRegions.textContent = `${activeRegionsCount} ภูมิภาค`;
+
+      const activeBrandsCount = (data.byBrand || []).filter((b) => b.total_pc > 0).length;
+      statActiveBrands.textContent = `${activeBrandsCount} แบรนด์`;
+
+      renderBrandDistributionChart(data.byBrand || []);
+      renderChoiceDistributionChart(data.byChoice || []);
+      renderRegionDistributionChart(data.byRegion || []);
+    } catch (err) {
+      console.error("Dashboard stats error:", err);
+    }
+  }
+
+  function renderBrandDistributionChart(brandsData) {
+    const ctx = document.getElementById("chartBrandDistribution")?.getContext("2d");
+    if (!ctx) return;
+
+    if (chartBrandInstance) chartBrandInstance.destroy();
+
+    const labels = brandsData.map((b) => b.name);
+    const values = brandsData.map((b) => b.total_pc);
+
+    chartBrandInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "จำนวน PC (คน)",
+            data: values,
+            backgroundColor: "#005AAA",
+            borderRadius: 6,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        },
+      },
+    });
+  }
+
+  function renderChoiceDistributionChart(choicesData) {
+    const ctx = document.getElementById("chartChoiceDistribution")?.getContext("2d");
+    if (!ctx) return;
+
+    if (chartChoiceInstance) chartChoiceInstance.destroy();
+
+    const labels = choicesData.map((c) => c.name);
+    const values = choicesData.map((c) => c.total_pc);
+
+    chartChoiceInstance = new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels,
+        datasets: [
+          {
+            data: values,
+            backgroundColor: ["#005AAA", "#00A4E4", "#0284c7", "#38bdf8", "#7dd3fc"],
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "bottom" },
+        },
+      },
+    });
+  }
+
+  function renderRegionDistributionChart(regionsData) {
+    const ctx = document.getElementById("chartRegionDistribution")?.getContext("2d");
+    if (!ctx) return;
+
+    if (chartRegionInstance) chartRegionInstance.destroy();
+
+    const labels = regionsData.map((r) => r.region);
+    const pcValues = regionsData.map((r) => r.total_pc);
+    const surveyValues = regionsData.map((r) => r.survey_count);
+
+    chartRegionInstance = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "จำนวน PC รวม (คน)",
+            data: pcValues,
+            backgroundColor: "#005AAA",
+            borderRadius: 6,
+          },
+          {
+            label: "จำนวนสาขาที่สำรวจแล้ว (สาขา)",
+            data: surveyValues,
+            backgroundColor: "#00A4E4",
+            borderRadius: 6,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        },
+      },
+    });
+  }
 
   function populateAdminFilters() {
     filterAdminRegion.innerHTML = '<option value="">-- ทุกภูมิภาค --</option>';
@@ -587,7 +728,6 @@ document.addEventListener("DOMContentLoaded", () => {
         tblAdminSurveysBody.appendChild(tr);
       });
 
-      // Attach Delete Handlers
       document.querySelectorAll(".btn-delete-survey").forEach((btn) => {
         btn.addEventListener("click", async () => {
           const sId = btn.getAttribute("data-survey-id");
@@ -599,6 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const delData = await delRes.json();
             if (delRes.ok && delData.success) {
               showToast("ลบข้อมูลแบบสำรวจเรียบร้อย", "success");
+              loadExecutiveDashboardStats();
               loadAdminSurveys();
             } else {
               showToast("ลบไม่สำเร็จ: " + delData.error, "error");
@@ -682,7 +823,6 @@ document.addEventListener("DOMContentLoaded", () => {
       tblAdminDimensionsBody.appendChild(tr);
     });
 
-    // Attach Toggle Listeners
     document.querySelectorAll(".btn-toggle-dim").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const dim = btn.getAttribute("data-dim");
@@ -730,6 +870,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       if (res.ok && data.success) {
         showToast("ล้างข้อมูลแบบสำรวจทั้งหมดในระบบเรียบร้อย", "success");
+        loadExecutiveDashboardStats();
         loadAdminSurveys();
       } else {
         showToast("เกิดข้อผิดพลาด: " + data.error, "error");
@@ -806,6 +947,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loadDimensions();
         loadAdminDimensions();
         loadAdminSurveys();
+        loadExecutiveDashboardStats();
       } else {
         showToast("เกิดข้อผิดพลาด: " + data.error, "error");
       }

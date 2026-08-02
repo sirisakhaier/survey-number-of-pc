@@ -6,6 +6,8 @@
   <title>ระบบสำรวจจำนวน PC ตามสาขา | Haier Electrical Appliances (Thailand)</title>
   <meta name="description" content="ระบบบันทึกและจัดการข้อมูลสำรวจจำนวนพนักงาน PC สำหรับ บริษัท ไฮเออร์ อีเลคทริคอล แอพพลายแอนซ์ (ประเทศไทย) จำกัด">
   <link rel="stylesheet" href="css/style.css">
+  <!-- Chart.js for Executive Dashboard Visualizations -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -85,8 +87,8 @@
         <div class="store-badge-info">
           <h2 id="lblBadgeStoreName">สาขา: -</h2>
           <p id="lblBadgeStoreDetail">ห้าง: - | ภูมิภาค: - | จังหวัด: -</p>
-          <p id="lblBadgeUserInfo" style="font-size: 0.85rem; margin-top: 2px;"></p>
-          <p id="lblBadgeSurveyStatus" style="font-size: 0.8rem; margin-top: 4px;"></p>
+          <p id="lblBadgeUserInfo" style="color: #0284c7; font-size: 0.85rem; margin-top: 2px;"></p>
+          <p id="lblBadgeSurveyStatus" style="color: #0284c7; font-size: 0.8rem; margin-top: 4px;"></p>
         </div>
         <div>
           <button id="btnBackToStores" class="btn btn-secondary">
@@ -131,33 +133,122 @@
 
   </div>
 
-  <!-- Admin Modal -->
-  <div id="modalAdmin" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2>🛠️ ผู้ดูแลระบบ (Admin Panel) - Haier Thailand</h2>
-        <button id="btnCloseAdminModal" class="modal-close">&times;</button>
+  <!-- Full-Screen Admin Workspace Page (Replaces Modal Popup) -->
+  <div id="viewAdmin" class="admin-fullscreen-container" style="display: none;">
+    
+    <!-- Admin Top Navigation Bar -->
+    <div class="admin-topbar">
+      <div class="admin-topbar-brand">
+        <img src="images/haier-logo.svg" alt="Haier Logo" class="header-logo">
+        <div>
+          <h2>🛠️ ระบบจัดการผู้ดูแลระบบ (Admin Workspace)</h2>
+          <p>Haier Electrical Appliances (Thailand) Co., Ltd.</p>
+        </div>
       </div>
+      <div style="display: flex; gap: 10px;">
+        <button id="btnAdminLogout" class="btn btn-secondary">
+          🚪 ออกจากระบบ Admin
+        </button>
+      </div>
+    </div>
 
-      <!-- Password Login Screen -->
-      <div id="adminAuthSection">
-        <p style="margin-bottom: 16px; color: var(--text-muted);">กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบ Admin Panel (Default: admin1234)</p>
+    <div class="admin-workspace-body">
+      
+      <!-- Admin Sign-in Screen (No default password hint) -->
+      <div id="adminAuthSection" class="card" style="max-width: 420px; margin: 40px auto;">
+        <div class="card-title">
+          <span>🔒 ยืนยันสิทธิ์ผู้ดูแลระบบ</span>
+        </div>
+        <p style="margin-bottom: 16px; color: var(--text-muted); font-size: 0.9rem;">
+          กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบผู้ดูแลระบบ (Admin Panel)
+        </p>
         <div class="form-group">
-          <input type="password" id="inputAdminPassword" class="form-input" placeholder="Admin Password">
+          <label for="inputAdminPassword">รหัสผ่าน (Password)</label>
+          <input type="password" id="inputAdminPassword" class="form-input" placeholder="กรอกรหัสผ่าน Admin">
         </div>
         <button id="btnAdminLogin" class="btn btn-primary btn-large">เข้าสู่ระบบ (Login)</button>
       </div>
 
-      <!-- Admin Panel Dashboard Content -->
+      <!-- Full-Screen Admin Dashboard Content -->
       <div id="adminDashboardSection" style="display: none;">
+        
         <div class="tab-nav">
-          <button class="tab-btn active" data-tab="tabSurveys">📊 ผลการสำรวจ (1 รายการ / 1 สาขา)</button>
+          <button class="tab-btn active" data-tab="tabExecutiveStats">📈 สรุปภาพรวมผู้บริหาร (Executive Dashboard)</button>
+          <button class="tab-btn" data-tab="tabSurveys">📊 ผลการสำรวจ (1 รายการ / 1 สาขา)</button>
           <button class="tab-btn" data-tab="tabManageDimensions">⚙️ เปิด/ปิดมิติข้อมูล (Active/Inactive)</button>
           <button class="tab-btn" data-tab="tabDimensions">📂 นำเข้ามิติข้อมูล (Import CSV)</button>
         </div>
 
-        <!-- Tab 1: Browse Survey Results -->
-        <div id="tabSurveys" class="tab-content active">
+        <!-- TAB 1: Executive Dashboard with Key Metrics & Charts -->
+        <div id="tabExecutiveStats" class="tab-content active">
+          
+          <!-- Key Metric Summary Cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">🏬</div>
+              <div class="stat-info">
+                <span class="stat-label">สาขาที่สำรวจแล้ว</span>
+                <h3 id="statTotalSurveys">0</h3>
+                <span id="statStoreRatio" class="stat-sub text-muted">จากทั้งหมด 1,058 สาขา</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">👥</div>
+              <div class="stat-info">
+                <span class="stat-label">จำนวน PC รวมทั้งหมด</span>
+                <h3 id="statTotalPC" style="color: var(--primary);">0 คน</h3>
+                <span class="stat-sub text-muted">รวมทุกแบรนด์และประเภท PC</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">🏢</div>
+              <div class="stat-info">
+                <span class="stat-label">ภูมิภาคที่มีข้อมูล</span>
+                <h3 id="statActiveRegions">0 ภูมิภาค</h3>
+                <span class="stat-sub text-muted">ภาคกลาง, เหนือ, อิสาน, ใต้ ฯลฯ</span>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">🏷️</div>
+              <div class="stat-info">
+                <span class="stat-label">แบรนด์ที่มีพนักงาน PC</span>
+                <h3 id="statActiveBrands">0 แบรนด์</h3>
+                <span class="stat-sub text-muted">จากมิติแบรนด์ทั้งหมด</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visual Analytics Charts Row -->
+          <div class="charts-grid">
+            <div class="chart-card">
+              <h4>📊 สัดส่วนพนักงาน PC แยกตามแบรนด์ (PC Count by Brand)</h4>
+              <div class="chart-container">
+                <canvas id="chartBrandDistribution"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <h4>🍩 สัดส่วนประเภทการจ้างงาน PC (PC Employment Types)</h4>
+              <div class="chart-container">
+                <canvas id="chartChoiceDistribution"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card style-full-width">
+              <h4>🗺️ จำนวนการสำรวจและพนักงาน PC แยกตามภูมิภาค (PC Count by Region)</h4>
+              <div class="chart-container" style="height: 300px;">
+                <canvas id="chartRegionDistribution"></canvas>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- TAB 2: Browse Survey Results (1 row per survey) -->
+        <div id="tabSurveys" class="tab-content">
           <div class="filter-row">
             <div>
               <label style="font-size: 0.8rem;">กรองตามภูมิภาค</label>
@@ -208,7 +299,7 @@
           </div>
         </div>
 
-        <!-- Tab 2: Manage Dimensions -->
+        <!-- TAB 3: Manage Dimensions -->
         <div id="tabManageDimensions" class="tab-content">
           <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
             <label style="font-weight: 600;">เลือกมิติข้อมูลที่ต้องการจัดการ:</label>
@@ -219,7 +310,7 @@
             </select>
           </div>
 
-          <div class="table-wrapper" style="max-height: 450px;">
+          <div class="table-wrapper" style="max-height: 500px;">
             <table class="admin-table">
               <thead>
                 <tr>
@@ -235,12 +326,12 @@
           </div>
         </div>
 
-        <!-- Tab 3: Dimension Data Import CSV -->
+        <!-- TAB 4: Dimension Data Import CSV -->
         <div id="tabDimensions" class="tab-content">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px;">
 
             <!-- Import Store CSV -->
-            <div style="padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <div style="padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-card);">
               <h4 style="margin-bottom: 8px; color: var(--primary);">1. นำเข้า Dimension Store (CSV)</h4>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">คอลัมน์: ชื่อสาขา, ห้าง, จังหวัด, ภูมิภาค</p>
               <input type="file" id="fileStoreCSV" accept=".csv" class="form-input" style="margin-bottom: 10px;">
@@ -248,7 +339,7 @@
             </div>
 
             <!-- Import Brand CSV -->
-            <div style="padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <div style="padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-card);">
               <h4 style="margin-bottom: 8px; color: var(--primary);">2. นำเข้า Dimension Brand (CSV)</h4>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">คอลัมน์: Brand</p>
               <input type="file" id="fileBrandCSV" accept=".csv" class="form-input" style="margin-bottom: 10px;">
@@ -256,7 +347,7 @@
             </div>
 
             <!-- Import Answer CSV -->
-            <div style="padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <div style="padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-card);">
               <h4 style="margin-bottom: 8px; color: var(--primary);">3. นำเข้า Dimension Answer (CSV)</h4>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">คอลัมน์: Answer Choice</p>
               <input type="file" id="fileAnswerCSV" accept=".csv" class="form-input" style="margin-bottom: 10px;">
@@ -277,6 +368,7 @@
       </div>
 
     </div>
+
   </div>
 
   <!-- Toast Notification Container -->
