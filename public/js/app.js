@@ -715,7 +715,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tblAdminSurveysBody.innerHTML = "";
       if (!data.results || data.results.length === 0) {
         tblAdminSurveysBody.innerHTML =
-          '<tr><td colspan="11" style="text-align: center; color: var(--text-muted);">ไม่พบข้อมูลแบบสำรวจตามเงื่อนไขที่เลือก</td></tr>';
+          '<tr><td colspan="12" style="text-align: center; color: var(--text-muted);">ไม่พบข้อมูลแบบสำรวจตามเงื่อนไขที่เลือก</td></tr>';
         return;
       }
 
@@ -727,7 +727,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tr.innerHTML = `
           <td>${row.survey_id || "-"}</td>
-          <td style="font-weight:600; color:var(--primary);">${row.store_id || "-"}</td>
+          <td style="font-weight:600; color:var(--primary);">${row.store_code || "-"}</td>
+          <td style="font-weight:600;">${row.store_name_en || "-"}</td>
           <td style="font-weight:600;">${row.store_name || "-"}</td>
           <td>${row.mall || "-"}</td>
           <td>${row.region || "-"}</td>
@@ -816,7 +817,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       let detailText = item.name || item.store_name;
       if (dimType === "stores") {
-        detailText = `${item.store_name} (ห้าง: ${item.mall} | ภูมิภาค: ${item.region} | จังหวัด: ${item.province})`;
+        detailText = `[${item.store_code || 'S-'}] ${item.store_name_en || ''} | ${item.store_name} (ห้าง: ${item.mall} | ภูมิภาค: ${item.region})`;
       }
 
       const statusBadge = isActive

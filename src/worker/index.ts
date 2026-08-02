@@ -64,7 +64,7 @@ export default {
         const whereClause = includeInactive ? "" : "WHERE is_active = 1";
 
         const stores = await env.DB.prepare(
-          `SELECT id, region, mall, province, store_name, is_active FROM stores ${whereClause} ORDER BY mall, region, store_name`
+          `SELECT id, store_code, store_name_en, region, mall, province, store_name, is_active FROM stores ${whereClause} ORDER BY mall, region, store_name`
         ).all();
 
         const brands = await env.DB.prepare(
@@ -88,7 +88,7 @@ export default {
         const whereClause = includeInactive ? "" : "WHERE is_active = 1";
 
         const { results } = await env.DB.prepare(
-          `SELECT id, region, mall, province, store_name, is_active FROM stores ${whereClause} ORDER BY mall, region, store_name`
+          `SELECT id, store_code, store_name_en, region, mall, province, store_name, is_active FROM stores ${whereClause} ORDER BY mall, region, store_name`
         ).all();
         return jsonResponse({ stores: results || [] });
       }
@@ -263,7 +263,7 @@ export default {
         return jsonResponse({ success: true, dimension: table, id, isActive: activeVal === 1 });
       }
 
-      // 8. POST /api/admin/import/stores
+      // 8. POST /api/admin/import/stores - Support 6-column CSV: ชื่อสาขา,ห้าง,จังหวัด,ภูมิภาค,STORE_ID,STORE_NAME
       if (method === "POST" && path === "/api/admin/import/stores") {
         const csvText = await request.text();
         const lines = csvText.split(/\r?\n/).filter((l) => l.trim().length > 0);
@@ -275,11 +275,11 @@ export default {
         for (let i = 1; i < lines.length; i++) {
           const cols = parseCSVLine(lines[i]);
           if (cols.length >= 4) {
-            const [storeName, mall, province, region] = cols;
+            const [storeName, mall, province, region, storeCode, storeNameEn] = cols;
             batch.push(
               env.DB.prepare(
-                "INSERT INTO stores (region, mall, province, store_name, is_active) VALUES (?, ?, ?, ?, 1)"
-              ).bind(region, mall, province, storeName)
+                "INSERT INTO stores (region, mall, province, store_name, store_code, store_name_en, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)"
+              ).bind(region, mall, province, storeName, storeCode || null, storeNameEn || null)
             );
           }
         }
@@ -366,11 +366,13 @@ export default {
         let query = `
           SELECT 
             sh.id as survey_id,
-            s.id as store_id,
+            s.id as db_store_id,
+            s.store_code,
+            s.store_name_en,
+            s.store_name,
             s.region,
             s.mall,
             s.province,
-            s.store_name,
             sh.last_update,
             sh.user,
             sh.phone,
@@ -406,14 +408,15 @@ export default {
         return jsonResponse({ results: results || [] });
       }
 
-      // 13. GET /api/admin/export - Includes STORE_ID and STORE_NAME in exported CSV
+      // 13. GET /api/admin/export - STORE_ID (e.g. S00913), STORE_NAME (English), ชื่อสาขา (Thai)
       if (method === "GET" && path === "/api/admin/export") {
         const query = `
           SELECT 
-            s.id as store_id,
-            s.store_name,
-            s.region,
+            s.store_code as store_id,
+            s.store_name_en as store_name_en,
+            s.store_name as thai_store_name,
             s.mall,
+            s.region,
             s.province,
             sh.last_update,
             sh.user,
@@ -431,14 +434,15 @@ export default {
 
         const { results } = await env.DB.prepare(query).all();
 
-        let csv = "\uFEFFSTORE_ID,STORE_NAME,ภูมิภาค,ห้าง,จังหวัด,วันที่อัปเดต,ผู้กรอก,เบอร์โทร,แบรนด์,ประเภทPC,จำนวน\n";
+        let csv = "\uFEFFSTORE_ID,STORE_NAME,ชื่อสาขา,ห้าง,ภูมิภาค,จังหวัด,วันที่อัปเดต,ผู้กรอก,เบอร์โทร,แบรนด์,ประเภทPC,จำนวน\n";
         if (results) {
           for (const r of results as any[]) {
             const line = [
-              `"${r.store_id ?? ''}"`,
-              `"${r.store_name || ''}"`,
-              `"${r.region || ''}"`,
+              `"${r.store_id || ''}"`,
+              `"${r.store_name_en || ''}"`,
+              `"${r.thai_store_name || ''}"`,
               `"${r.mall || ''}"`,
+              `"${r.region || ''}"`,
               `"${r.province || ''}"`,
               `"${r.last_update || ''}"`,
               `"${r.user || ''}"`,

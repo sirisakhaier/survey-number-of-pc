@@ -286,8 +286,9 @@
                   <th>SURVEY_ID</th>
                   <th>STORE_ID</th>
                   <th>STORE_NAME</th>
-                  <th>ห้าง (MALL)</th>
-                  <th>ภูมิภาค (REGION)</th>
+                  <th>ชื่อสาขา</th>
+                  <th>ห้าง</th>
+                  <th>ภูมิภาค</th>
                   <th>ผู้กรอก</th>
                   <th>เบอร์โทร</th>
                   <th>วันที่อัปเดต</th>
@@ -297,7 +298,7 @@
                 </tr>
               </thead>
               <tbody id="tblAdminSurveysBody">
-                <tr><td colspan="11" style="text-align: center; color: var(--text-muted);">กดปุ่มกรองข้อมูลเพื่อโหลดรายการ</td></tr>
+                <tr><td colspan="12" style="text-align: center; color: var(--text-muted);">กดปุ่มกรองข้อมูลเพื่อโหลดรายการ</td></tr>
               </tbody>
             </table>
           </div>
@@ -337,7 +338,7 @@
             <!-- Import Store CSV -->
             <div style="padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-card);">
               <h4 style="margin-bottom: 8px; color: var(--primary);">1. นำเข้า Dimension Store (CSV)</h4>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">คอลัมน์: ชื่อสาขา, ห้าง, จังหวัด, ภูมิภาค</p>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">คอลัมน์: ชื่อสาขา, ห้าง, จังหวัด, ภูมิภาค, STORE_ID, STORE_NAME</p>
               <input type="file" id="fileStoreCSV" accept=".csv" class="form-input" style="margin-bottom: 10px;">
               <button id="btnImportStores" class="btn btn-secondary" style="width: 100%;">Upload Store CSV</button>
             </div>
