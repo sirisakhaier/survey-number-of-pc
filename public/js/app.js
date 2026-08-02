@@ -1,6 +1,8 @@
-// Client Application Logic for Survey Application (Vanilla JS - Light Theme)
+// Client Application Logic for Survey Application (Light & Dark Theme Toggle)
 document.addEventListener("DOMContentLoaded", () => {
   // --- DOM Elements ---
+  const btnThemeToggle = document.getElementById("btnThemeToggle");
+
   const selectMall = document.getElementById("selectMall");
   const selectRegion = document.getElementById("selectRegion");
   const selectStore = document.getElementById("selectStore");
@@ -61,6 +63,27 @@ document.addEventListener("DOMContentLoaded", () => {
   let allAdminBrands = [];
   let allAdminAnswerChoices = [];
   let currentSelectedStore = null;
+
+  // --- Theme Toggle Logic ---
+  let currentTheme = localStorage.getItem("haier-survey-theme") || "light";
+  applyTheme(currentTheme);
+
+  function applyTheme(theme) {
+    currentTheme = theme;
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("haier-survey-theme", theme);
+    if (btnThemeToggle) {
+      btnThemeToggle.innerHTML = theme === "dark" ? "☀️ Light Mode" : "🌙 Dark Mode";
+    }
+  }
+
+  if (btnThemeToggle) {
+    btnThemeToggle.addEventListener("click", () => {
+      const nextTheme = currentTheme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme);
+      showToast(`สลับใช้งาน ${nextTheme === "dark" ? "โหมดมืด (Dark Mode)" : "โหมดสว่าง (Light Mode)"}`, "info");
+    });
+  }
 
   // --- Utility Functions ---
   function showSpinner(show = true) {
@@ -385,7 +408,7 @@ document.addEventListener("DOMContentLoaded", () => {
     showToast("รีเซ็ตตัวเลขทั้งหมดเป็น 0 เรียบร้อย", "info");
   });
 
-  // --- Save Survey (Removes 0 answers & Returns to Landing Page) ---
+  // --- Save Survey ---
   btnSaveSurvey.addEventListener("click", async () => {
     if (!currentSelectedStore) return;
 
@@ -553,7 +576,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${row.user || "user"}</td>
           <td>${row.phone || "-"}</td>
           <td>${lastUpdateStr}</td>
-          <td style="font-weight: bold; color: var(--haier-blue); text-align: center;">${row.total_pc ?? 0} คน</td>
+          <td style="font-weight: bold; color: var(--primary); text-align: center;">${row.total_pc ?? 0} คน</td>
           <td style="font-size: 0.8rem; color: var(--text-main);">${row.summary || '<span style="color:var(--text-muted)">ไม่มีพนักงาน PC</span>'}</td>
           <td>
             <button class="btn btn-danger btn-delete-survey" data-survey-id="${row.survey_id}" style="padding: 4px 8px; font-size: 0.75rem;">
@@ -639,8 +662,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const statusBadge = isActive
-        ? '<span style="color: #0284c7; background: #e0f2fe; padding: 4px 10px; border-radius: 12px; font-weight:600;">Active (เปิดใช้งาน)</span>'
-        : '<span style="color: #ef4444; background: #fee2e2; padding: 4px 10px; border-radius: 12px; font-weight:600;">Inactive (ปิดใช้งาน)</span>';
+        ? '<span style="color: #0284c7; background: var(--badge-bg); padding: 4px 10px; border-radius: 12px; font-weight:600;">Active (เปิดใช้งาน)</span>'
+        : '<span style="color: #ef4444; background: rgba(239,68,68,0.15); padding: 4px 10px; border-radius: 12px; font-weight:600;">Inactive (ปิดใช้งาน)</span>';
 
       const toggleBtnText = isActive ? "🔴 ปิดใช้งาน (Disable)" : "🟢 เปิดใช้งาน (Enable)";
       const toggleBtnClass = isActive ? "btn-danger" : "btn-accent";

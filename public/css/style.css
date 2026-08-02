@@ -1,36 +1,77 @@
-/* Haier Electrical Appliances Light Theme for Survey Web App */
+/* Haier Electrical Appliances Theme (Dynamic Light & Dark Modes) */
 @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
   --font-main: 'Prompt', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   
-  /* Haier Official Light Color Palette */
+  /* Shared Haier Corporate Palette */
   --haier-blue: #005AAA;
   --haier-blue-dark: #004280;
-  --haier-blue-light: #0082E6;
   --haier-accent-cyan: #00A4E4;
-  --haier-light-bg: #f4f7fa;
-  --haier-card-bg: #ffffff;
-  --haier-card-solid: #ffffff;
-  --haier-input-bg: #ffffff;
-  --haier-border: #cbd5e1;
-
-  --primary: var(--haier-blue);
-  --primary-hover: var(--haier-blue-dark);
-  --primary-glow: rgba(0, 90, 170, 0.25);
-  --accent: #0284c7;
-  --accent-hover: #0369a1;
   --danger: #ef4444;
   --danger-hover: #dc2626;
   --warning: #d97706;
-  --text-main: #0f172a;
-  --text-muted: #475569;
 
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 8px;
-  --shadow-lg: 0 10px 25px -5px rgba(0, 50, 110, 0.08), 0 8px 10px -6px rgba(0, 50, 110, 0.04);
   --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- Light Theme (Default) --- */
+:root, [data-theme="light"] {
+  --bg-main: #f4f7fa;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --border-color: #cbd5e1;
+  --header-bg: rgba(255, 255, 255, 0.95);
+  --header-title: var(--haier-blue);
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --primary: var(--haier-blue);
+  --primary-hover: var(--haier-blue-dark);
+  --primary-glow: rgba(0, 90, 170, 0.2);
+  --accent: #0284c7;
+  --accent-hover: #0369a1;
+  --badge-bg: #e0f2fe;
+  --badge-border: #7dd3fc;
+  --badge-text: #0369a1;
+  --table-first-col: #f8fafc;
+  --table-hover: #f0f9ff;
+  --table-totals: #e0f2fe;
+  --shadow: 0 10px 25px -5px rgba(0, 50, 110, 0.08);
+  --modal-overlay-bg: rgba(15, 23, 42, 0.5);
+  --modal-bg: #ffffff;
+  --input-focus-bg: #ffffff;
+  --tab-active: var(--haier-blue);
+}
+
+/* --- Dark Theme --- */
+[data-theme="dark"] {
+  --bg-main: #081427;
+  --bg-card: rgba(14, 30, 56, 0.88);
+  --bg-input: #193158;
+  --border-color: rgba(0, 164, 228, 0.25);
+  --header-bg: rgba(8, 20, 39, 0.92);
+  --header-title: #ffffff;
+  --text-main: #ffffff;
+  --text-muted: #94a3b8;
+  --primary: var(--haier-blue);
+  --primary-hover: #006ecb;
+  --primary-glow: rgba(0, 90, 170, 0.4);
+  --accent: var(--haier-accent-cyan);
+  --accent-hover: #0086bc;
+  --badge-bg: rgba(0, 90, 170, 0.25);
+  --badge-border: var(--haier-blue);
+  --badge-text: var(--haier-accent-cyan);
+  --table-first-col: #0d1e38;
+  --table-hover: rgba(0, 164, 228, 0.08);
+  --table-totals: rgba(0, 164, 228, 0.15);
+  --shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.6);
+  --modal-overlay-bg: rgba(0, 0, 0, 0.8);
+  --modal-bg: #102242;
+  --input-focus-bg: #09162a;
+  --tab-active: var(--haier-accent-cyan);
 }
 
 * {
@@ -41,31 +82,29 @@
 
 body {
   font-family: var(--font-main);
-  background-color: var(--haier-light-bg);
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(0, 90, 170, 0.06) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(0, 164, 228, 0.05) 0px, transparent 50%);
-  background-attachment: fixed;
+  background-color: var(--bg-main);
   color: var(--text-main);
   min-height: 100vh;
   line-height: 1.6;
   padding-bottom: 40px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Sticky Header - Light Corporate Theme */
+/* Sticky Header */
 header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--header-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 3px solid var(--haier-blue);
-  padding: 12px 24px;
+  padding: 10px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 4px 15px rgba(0, 40, 90, 0.08);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
 }
 
 .header-brand {
@@ -74,16 +113,19 @@ header {
   gap: 16px;
 }
 
+/* Exact Haier Logo 4:3 Box Aspect Ratio Fix */
 .header-logo {
-  height: 48px;
-  width: auto;
-  display: block;
+  height: 46px;
+  width: 61px;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 .header-title h1 {
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--haier-blue);
+  color: var(--header-title);
   letter-spacing: -0.2px;
 }
 
@@ -95,6 +137,7 @@ header {
 
 .header-actions {
   display: flex;
+  align-items: center;
   gap: 10px;
 }
 
@@ -117,21 +160,19 @@ header {
 }
 
 .btn-primary {
-  background: var(--haier-blue);
+  background: var(--primary);
   color: white;
   box-shadow: 0 4px 14px var(--primary-glow);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  background: var(--haier-blue-dark);
-  box-shadow: 0 6px 20px rgba(0, 90, 170, 0.35);
+  background: var(--primary-hover);
 }
 
 .btn-accent {
   background: var(--accent);
   color: white;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);
 }
 
 .btn-accent:hover {
@@ -149,14 +190,13 @@ header {
 }
 
 .btn-secondary {
-  background: #f1f5f9;
+  background: var(--bg-input);
   color: var(--text-main);
-  border: 1px solid var(--haier-border);
+  border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-  background: #e2e8f0;
-  color: var(--haier-blue);
+  border-color: var(--primary);
 }
 
 .btn-large {
@@ -174,14 +214,15 @@ header {
   padding: 24px 16px;
 }
 
-/* Cards - Pure White Light Card */
+/* Cards */
 .card {
-  background: var(--haier-card-bg);
-  border: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   padding: 28px;
   margin-bottom: 24px;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow);
+  transition: var(--transition);
 }
 
 .card-title {
@@ -191,8 +232,8 @@ header {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--haier-blue);
-  border-bottom: 2px solid #f1f5f9;
+  color: var(--primary);
+  border-bottom: 2px solid var(--border-color);
   padding-bottom: 14px;
 }
 
@@ -207,10 +248,9 @@ header {
   justify-content: center;
   font-size: 0.95rem;
   font-weight: 700;
-  box-shadow: 0 2px 8px var(--primary-glow);
 }
 
-/* Form Controls - Crisp Light Inputs */
+/* Form Controls */
 .form-group {
   margin-bottom: 20px;
 }
@@ -219,15 +259,15 @@ header {
   display: block;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-main);
   margin-bottom: 8px;
 }
 
 .form-select, .form-input {
   width: 100%;
   padding: 12px 16px;
-  background: var(--haier-input-bg);
-  border: 1px solid var(--haier-border);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-main);
   font-family: var(--font-main);
@@ -251,17 +291,16 @@ header {
 }
 
 .form-select:disabled {
-  background-color: #f8fafc;
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Matrix Table Styling - Light High Contrast Grid */
+/* Matrix Table Styling */
 .table-wrapper {
   overflow-x: auto;
   border-radius: var(--radius-md);
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
   margin-bottom: 20px;
   -webkit-overflow-scrolling: touch;
 }
@@ -275,8 +314,8 @@ header {
 .matrix-table th, .matrix-table td {
   padding: 12px 14px;
   text-align: center;
-  border-bottom: 1px solid #e2e8f0;
-  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
 }
 
 .matrix-table th {
@@ -292,8 +331,8 @@ header {
 .matrix-table th:first-child, .matrix-table td:first-child {
   text-align: left;
   font-weight: 600;
-  color: #0f172a;
-  background: #f8fafc;
+  color: var(--text-main);
+  background: var(--table-first-col);
   position: sticky;
   left: 0;
   z-index: 5;
@@ -301,17 +340,17 @@ header {
 }
 
 .matrix-table tr:hover td {
-  background: #f0f9ff;
+  background: var(--table-hover);
 }
 
 .cell-input {
   width: 80px;
   padding: 8px 10px;
   text-align: center;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  color: #0f172a;
+  color: var(--text-main);
   font-family: var(--font-main);
   font-size: 1rem;
   font-weight: 600;
@@ -321,20 +360,20 @@ header {
 .cell-input:focus {
   outline: none;
   border-color: var(--haier-blue);
-  background: #ffffff;
+  background: var(--input-focus-bg);
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .row-total, .col-total, .grand-total {
   font-weight: 700;
   color: var(--haier-blue);
-  background: #e0f2fe !important;
+  background: var(--table-totals) !important;
 }
 
-/* Store Badge Header - Light Accent */
+/* Store Badge Header */
 .store-badge {
-  background: #e0f2fe;
-  border: 1px solid #7dd3fc;
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
   border-radius: var(--radius-md);
   padding: 18px;
   margin-bottom: 20px;
@@ -347,23 +386,23 @@ header {
 
 .store-badge-info h2 {
   font-size: 1.2rem;
-  color: var(--haier-blue);
+  color: var(--text-main);
   font-weight: 700;
 }
 
 .store-badge-info p {
   font-size: 0.88rem;
-  color: #0369a1;
+  color: var(--badge-text);
 }
 
-/* Modal - Light Theme Dialog */
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--modal-overlay-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   z-index: 1000;
@@ -382,15 +421,15 @@ header {
 }
 
 .modal-card {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--modal-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 950px;
   max-height: 90vh;
   overflow-y: auto;
   padding: 28px;
-  box-shadow: 0 20px 40px rgba(0, 40, 90, 0.15);
+  box-shadow: var(--shadow);
   transform: translateY(20px);
   transition: var(--transition);
 }
@@ -409,19 +448,19 @@ header {
 }
 
 .modal-header h2 {
-  color: var(--haier-blue);
+  color: var(--primary);
 }
 
 .modal-close {
   background: none;
   border: none;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 28px;
   cursor: pointer;
 }
 
 .modal-close:hover {
-  color: #0f172a;
+  color: var(--text-main);
 }
 
 /* Admin Tabs */
@@ -429,14 +468,14 @@ header {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
   overflow-x: auto;
 }
 
 .tab-btn {
   background: none;
   border: none;
-  color: #64748b;
+  color: var(--text-muted);
   padding: 10px 16px;
   font-size: 0.95rem;
   font-weight: 600;
@@ -446,8 +485,8 @@ header {
 }
 
 .tab-btn.active {
-  color: var(--haier-blue);
-  border-bottom-color: var(--haier-blue);
+  color: var(--tab-active);
+  border-bottom-color: var(--tab-active);
 }
 
 .tab-content {
@@ -475,7 +514,7 @@ header {
 
 .admin-table th, .admin-table td {
   padding: 12px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
   text-align: left;
 }
 
@@ -496,21 +535,21 @@ header {
 }
 
 .toast {
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-left: 4px solid var(--haier-blue);
   padding: 14px 20px;
   border-radius: var(--radius-md);
-  color: #0f172a;
+  color: var(--text-main);
   font-size: 0.9rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
   display: flex;
   align-items: center;
   gap: 10px;
   animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.toast.toast-success { border-left-color: #0284c7; }
+.toast.toast-success { border-left-color: var(--accent); }
 .toast.toast-error { border-left-color: var(--danger); }
 .toast.toast-warning { border-left-color: var(--warning); }
 
@@ -526,7 +565,7 @@ header {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--modal-overlay-bg);
   backdrop-filter: blur(4px);
   z-index: 3000;
   display: flex;
@@ -562,15 +601,15 @@ footer {
   text-align: center;
   padding: 20px;
   font-size: 0.82rem;
-  color: #64748b;
+  color: var(--text-muted);
   margin-top: 20px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--border-color);
 }
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
   .header-title p { font-size: 0.7rem; }
-  .header-logo { height: 38px; }
+  .header-logo { height: 38px; width: 50px; }
   .card { padding: 18px; }
   .btn { padding: 10px 14px; font-size: 0.85rem; }
   .cell-input { width: 65px; padding: 6px; font-size: 0.9rem; }

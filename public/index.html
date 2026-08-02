@@ -19,6 +19,9 @@
       </div>
     </div>
     <div class="header-actions">
+      <button id="btnThemeToggle" class="btn btn-secondary" title="สลับโหมดสว่าง / โหมดมืด">
+        🌙 Dark
+      </button>
       <button id="btnAdminTrigger" class="btn btn-secondary">
         ⚙️ Admin Panel
       </button>
@@ -82,8 +85,8 @@
         <div class="store-badge-info">
           <h2 id="lblBadgeStoreName">สาขา: -</h2>
           <p id="lblBadgeStoreDetail">ห้าง: - | ภูมิภาค: - | จังหวัด: -</p>
-          <p id="lblBadgeUserInfo" style="color: #0284c7; font-size: 0.85rem; margin-top: 2px;"></p>
-          <p id="lblBadgeSurveyStatus" style="color: #0284c7; font-size: 0.8rem; margin-top: 4px;"></p>
+          <p id="lblBadgeUserInfo" style="font-size: 0.85rem; margin-top: 2px;"></p>
+          <p id="lblBadgeSurveyStatus" style="font-size: 0.8rem; margin-top: 4px;"></p>
         </div>
         <div>
           <button id="btnBackToStores" class="btn btn-secondary">
@@ -157,19 +160,19 @@
         <div id="tabSurveys" class="tab-content active">
           <div class="filter-row">
             <div>
-              <label style="font-size: 0.8rem; color: #1e293b;">กรองตามภูมิภาค</label>
+              <label style="font-size: 0.8rem;">กรองตามภูมิภาค</label>
               <select id="filterAdminRegion" class="form-select">
                 <option value="">-- ทุกภูมิภาค --</option>
               </select>
             </div>
             <div>
-              <label style="font-size: 0.8rem; color: #1e293b;">กรองตามสาขา</label>
+              <label style="font-size: 0.8rem;">กรองตามสาขา</label>
               <select id="filterAdminStore" class="form-select">
                 <option value="">-- ทุกสาขา --</option>
               </select>
             </div>
             <div>
-              <label style="font-size: 0.8rem; color: #1e293b;">กรองตามแบรนด์ที่มี PC</label>
+              <label style="font-size: 0.8rem;">กรองตามแบรนด์ที่มี PC</label>
               <select id="filterAdminBrand" class="form-select">
                 <option value="">-- ทุกแบรนด์ --</option>
               </select>
@@ -237,24 +240,24 @@
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px;">
 
             <!-- Import Store CSV -->
-            <div style="background: #f8fafc; padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--haier-border);">
-              <h4 style="margin-bottom: 8px; color: var(--haier-blue);">1. นำเข้า Dimension Store (CSV)</h4>
+            <div style="padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <h4 style="margin-bottom: 8px; color: var(--primary);">1. นำเข้า Dimension Store (CSV)</h4>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">คอลัมน์: ชื่อสาขา, ห้าง, จังหวัด, ภูมิภาค</p>
               <input type="file" id="fileStoreCSV" accept=".csv" class="form-input" style="margin-bottom: 10px;">
               <button id="btnImportStores" class="btn btn-secondary" style="width: 100%;">Upload Store CSV</button>
             </div>
 
             <!-- Import Brand CSV -->
-            <div style="background: #f8fafc; padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--haier-border);">
-              <h4 style="margin-bottom: 8px; color: var(--haier-blue);">2. นำเข้า Dimension Brand (CSV)</h4>
+            <div style="padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <h4 style="margin-bottom: 8px; color: var(--primary);">2. นำเข้า Dimension Brand (CSV)</h4>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">คอลัมน์: Brand</p>
               <input type="file" id="fileBrandCSV" accept=".csv" class="form-input" style="margin-bottom: 10px;">
               <button id="btnImportBrands" class="btn btn-secondary" style="width: 100%;">Upload Brand CSV</button>
             </div>
 
             <!-- Import Answer CSV -->
-            <div style="background: #f8fafc; padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--haier-border);">
-              <h4 style="margin-bottom: 8px; color: var(--haier-blue);">3. นำเข้า Dimension Answer (CSV)</h4>
+            <div style="padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <h4 style="margin-bottom: 8px; color: var(--primary);">3. นำเข้า Dimension Answer (CSV)</h4>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">คอลัมน์: Answer Choice</p>
               <input type="file" id="fileAnswerCSV" accept=".csv" class="form-input" style="margin-bottom: 10px;">
               <button id="btnImportAnswers" class="btn btn-secondary" style="width: 100%;">Upload Answer CSV</button>
@@ -262,7 +265,7 @@
 
           </div>
 
-          <div style="border-top: 1px solid var(--haier-border); padding-top: 20px;">
+          <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
             <h4 style="color: var(--danger); margin-bottom: 8px;">⚠️ Reset Dimension System</h4>
             <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
               ปุ่มนี้จะทำการรีเซ็ต ลบมิติข้อมูล (Stores, Brands, Answer Choices) และข้อมูลสำรวจทั้งหมดออกจากฐานข้อมูล D1
@@ -282,7 +285,7 @@
   <!-- Loading Spinner Overlay -->
   <div id="spinnerOverlay" class="spinner-overlay">
     <div class="spinner"></div>
-    <p style="color: var(--haier-blue); font-weight: 600;">กำลังประมวลผลข้อมูล...</p>
+    <p style="color: var(--primary); font-weight: 600;">กำลังประมวลผลข้อมูล...</p>
   </div>
 
   <footer>
