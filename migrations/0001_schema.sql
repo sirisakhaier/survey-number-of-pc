@@ -4,17 +4,20 @@ CREATE TABLE IF NOT EXISTS stores (
     region TEXT NOT NULL,
     mall TEXT NOT NULL,
     province TEXT NOT NULL,
-    store_name TEXT NOT NULL
+    store_name TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS brands (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE
+    name TEXT NOT NULL UNIQUE,
+    is_active INTEGER DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS answer_choices (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE
+    name TEXT NOT NULL UNIQUE,
+    is_active INTEGER DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS survey_header (
@@ -22,6 +25,7 @@ CREATE TABLE IF NOT EXISTS survey_header (
     store_id INTEGER NOT NULL UNIQUE,
     last_update DATETIME DEFAULT CURRENT_TIMESTAMP,
     user TEXT DEFAULT 'user',
+    phone TEXT,
     FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE
 );
 

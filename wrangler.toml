@@ -8,4 +8,4 @@ directory = "./public"
 [[d1_databases]]
 binding = "DB"
 database_name = "survey_db"
-database_id = "YOUR_D1_DATABASE_ID"
+database_id = "8a14639b-e945-4833-ac08-02cdbf92c95c"

@@ -1,16 +1,18 @@
 // Client Application Logic for Survey Application (Vanilla JS)
 document.addEventListener("DOMContentLoaded", () => {
   // --- DOM Elements ---
-  const selectRegion = document.getElementById("selectRegion");
   const selectMall = document.getElementById("selectMall");
+  const selectRegion = document.getElementById("selectRegion");
   const selectStore = document.getElementById("selectStore");
   const inputUserName = document.getElementById("inputUserName");
+  const inputUserPhone = document.getElementById("inputUserPhone");
   const btnStartSurvey = document.getElementById("btnStartSurvey");
 
   const viewLanding = document.getElementById("viewLanding");
   const viewSurvey = document.getElementById("viewSurvey");
   const lblBadgeStoreName = document.getElementById("lblBadgeStoreName");
   const lblBadgeStoreDetail = document.getElementById("lblBadgeStoreDetail");
+  const lblBadgeUserInfo = document.getElementById("lblBadgeUserInfo");
   const lblBadgeSurveyStatus = document.getElementById("lblBadgeSurveyStatus");
   const btnBackToStores = document.getElementById("btnBackToStores");
 
@@ -37,6 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnAdminClearSurveys = document.getElementById("btnAdminClearSurveys");
   const tblAdminSurveysBody = document.getElementById("tblAdminSurveysBody");
 
+  const selectDimType = document.getElementById("selectDimType");
+  const tblAdminDimensionsBody = document.getElementById("tblAdminDimensionsBody");
+
   const fileStoreCSV = document.getElementById("fileStoreCSV");
   const btnImportStores = document.getElementById("btnImportStores");
   const fileBrandCSV = document.getElementById("fileBrandCSV");
@@ -52,6 +57,9 @@ document.addEventListener("DOMContentLoaded", () => {
   let allStores = [];
   let allBrands = [];
   let allAnswerChoices = [];
+  let allAdminStores = [];
+  let allAdminBrands = [];
+  let allAdminAnswerChoices = [];
   let currentSelectedStore = null;
 
   // --- Utility Functions ---
@@ -83,6 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadDimensions() {
     showSpinner(true);
     try {
+      // Client view: loads only active items
       const res = await fetch("/api/dimensions");
       if (!res.ok) throw new Error("Failed to load dimensions");
       const data = await res.json();
@@ -91,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
       allBrands = data.brands || [];
       allAnswerChoices = data.answerChoices || [];
 
-      populateRegionDropdown();
+      populateMallDropdown();
       populateAdminFilters();
     } catch (err) {
       showToast("เกิดข้อผิดพลาดในการโหลดข้อมูล: " + err.message, "error");
@@ -100,62 +109,62 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Cascading Dropdown Logic ---
-  function populateRegionDropdown() {
+  // --- Cascading Dropdown Logic (Order: 1. ห้าง -> 2. ภูมิภาค -> 3. สาขา) ---
+  function populateMallDropdown() {
+    selectMall.innerHTML = '<option value="">-- กรุณาเลือกห้าง/ช่องทาง --</option>';
     selectRegion.innerHTML = '<option value="">-- กรุณาเลือกภูมิภาค --</option>';
-    selectMall.innerHTML = '<option value="">-- กรุณาเลือกห้าง/ช่องทาง --</option>';
     selectStore.innerHTML = '<option value="">-- กรุณาเลือกสาขา --</option>';
-    selectMall.disabled = true;
+    selectRegion.disabled = true;
     selectStore.disabled = true;
     btnStartSurvey.disabled = true;
 
-    const regions = Array.from(new Set(allStores.map((s) => s.region))).sort();
-    regions.forEach((r) => {
-      const opt = document.createElement("option");
-      opt.value = r;
-      opt.textContent = r;
-      selectRegion.appendChild(opt);
-    });
-  }
-
-  selectRegion.addEventListener("change", () => {
-    const selectedRegion = selectRegion.value;
-    selectMall.innerHTML = '<option value="">-- กรุณาเลือกห้าง/ช่องทาง --</option>';
-    selectStore.innerHTML = '<option value="">-- กรุณาเลือกสาขา --</option>';
-    selectStore.disabled = true;
-    btnStartSurvey.disabled = true;
-
-    if (!selectedRegion) {
-      selectMall.disabled = true;
-      return;
-    }
-
-    const filteredStores = allStores.filter((s) => s.region === selectedRegion);
-    const malls = Array.from(new Set(filteredStores.map((s) => s.mall))).sort();
-
+    const malls = Array.from(new Set(allStores.map((s) => s.mall))).sort();
     malls.forEach((m) => {
       const opt = document.createElement("option");
       opt.value = m;
       opt.textContent = m;
       selectMall.appendChild(opt);
     });
-    selectMall.disabled = false;
-  });
+  }
 
   selectMall.addEventListener("change", () => {
-    const selectedRegion = selectRegion.value;
     const selectedMall = selectMall.value;
+    selectRegion.innerHTML = '<option value="">-- กรุณาเลือกภูมิภาค --</option>';
+    selectStore.innerHTML = '<option value="">-- กรุณาเลือกสาขา --</option>';
+    selectStore.disabled = true;
+    btnStartSurvey.disabled = true;
+
+    if (!selectedMall) {
+      selectRegion.disabled = true;
+      return;
+    }
+
+    const filteredStores = allStores.filter((s) => s.mall === selectedMall);
+    const regions = Array.from(new Set(filteredStores.map((s) => s.region))).sort();
+
+    regions.forEach((r) => {
+      const opt = document.createElement("option");
+      opt.value = r;
+      opt.textContent = r;
+      selectRegion.appendChild(opt);
+    });
+    selectRegion.disabled = false;
+  });
+
+  selectRegion.addEventListener("change", () => {
+    const selectedMall = selectMall.value;
+    const selectedRegion = selectRegion.value;
 
     selectStore.innerHTML = '<option value="">-- กรุณาเลือกสาขา --</option>';
     btnStartSurvey.disabled = true;
 
-    if (!selectedRegion || !selectedMall) {
+    if (!selectedMall || !selectedRegion) {
       selectStore.disabled = true;
       return;
     }
 
     const filteredStores = allStores.filter(
-      (s) => s.region === selectedRegion && s.mall === selectedMall
+      (s) => s.mall === selectedMall && s.region === selectedRegion
     );
 
     filteredStores.forEach((s) => {
@@ -167,18 +176,33 @@ document.addEventListener("DOMContentLoaded", () => {
     selectStore.disabled = false;
   });
 
-  selectStore.addEventListener("change", () => {
+  selectStore.addEventListener("change", checkStartSurveyState);
+  inputUserName.addEventListener("input", checkStartSurveyState);
+  inputUserPhone.addEventListener("input", checkStartSurveyState);
+
+  function checkStartSurveyState() {
     const storeId = parseInt(selectStore.value, 10);
     currentSelectedStore = allStores.find((s) => s.id === storeId) || null;
-    btnStartSurvey.disabled = !currentSelectedStore;
-  });
+    const hasName = inputUserName.value.trim().length > 0;
+    const hasPhone = inputUserPhone.value.trim().length > 0;
+
+    btnStartSurvey.disabled = !(currentSelectedStore && hasName && hasPhone);
+  }
 
   // --- Start Survey & Render Matrix ---
   btnStartSurvey.addEventListener("click", async () => {
     if (!currentSelectedStore) return;
+    const userName = inputUserName.value.trim();
+    const userPhone = inputUserPhone.value.trim();
+
+    if (!userName || !userPhone) {
+      showToast("กรุณาระบุชื่อผู้กรอกและเบอร์โทรศัพท์ก่อนเริ่มทำแบบสำรวจ", "warning");
+      return;
+    }
 
     lblBadgeStoreName.textContent = `สาขา: ${currentSelectedStore.store_name}`;
-    lblBadgeStoreDetail.textContent = `ภูมิภาค: ${currentSelectedStore.region} | ห้าง: ${currentSelectedStore.mall} | จังหวัด: ${currentSelectedStore.province}`;
+    lblBadgeStoreDetail.textContent = `ห้าง: ${currentSelectedStore.mall} | ภูมิภาค: ${currentSelectedStore.region} | จังหวัด: ${currentSelectedStore.province}`;
+    lblBadgeUserInfo.textContent = `ผู้กรอก: ${userName} (โทร: ${userPhone})`;
     lblBadgeSurveyStatus.textContent = "กำลังโหลดข้อมูล...";
 
     renderMatrixGrid();
@@ -220,9 +244,20 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   btnBackToStores.addEventListener("click", () => {
+    resetToLandingPage();
+  });
+
+  function resetToLandingPage() {
     viewSurvey.style.display = "none";
     viewLanding.style.display = "block";
-  });
+    selectMall.value = "";
+    selectRegion.innerHTML = '<option value="">-- กรุณาเลือกภูมิภาค --</option>';
+    selectRegion.disabled = true;
+    selectStore.innerHTML = '<option value="">-- กรุณาเลือกสาขา --</option>';
+    selectStore.disabled = true;
+    currentSelectedStore = null;
+    btnStartSurvey.disabled = true;
+  }
 
   // --- Matrix Grid Render & Calculation ---
   function renderMatrixGrid() {
@@ -351,9 +386,17 @@ document.addEventListener("DOMContentLoaded", () => {
     showToast("รีเซ็ตตัวเลขทั้งหมดเป็น 0 เรียบร้อย", "info");
   });
 
-  // --- Save Survey ---
+  // --- Save Survey (Removes 0 answers & Returns to Landing Page) ---
   btnSaveSurvey.addEventListener("click", async () => {
     if (!currentSelectedStore) return;
+
+    const userName = inputUserName.value.trim();
+    const userPhone = inputUserPhone.value.trim();
+
+    if (!userName || !userPhone) {
+      showToast("กรุณาระบุชื่อผู้กรอกและเบอร์โทรศัพท์", "warning");
+      return;
+    }
 
     const details = [];
     const inputs = document.querySelectorAll(".cell-input");
@@ -363,10 +406,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const choiceId = parseInt(input.dataset.choiceId || "0", 10);
       const val = parseInt(input.value, 10) || 0;
 
+      // Send all, backend will filter out val = 0
       details.push({ brandId, answerChoiceId: choiceId, value: val });
     });
-
-    const userName = inputUserName.value.trim() || "user";
 
     showSpinner(true);
     try {
@@ -376,6 +418,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({
           storeId: currentSelectedStore.id,
           user: userName,
+          phone: userPhone,
           details,
         }),
       });
@@ -385,8 +428,11 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(data.error || "Failed to save survey");
       }
 
-      showToast("🎉 บันทึกข้อมูลแบบสำรวจสำเร็จเรียบร้อย!", "success");
-      lblBadgeSurveyStatus.textContent = `✅ บันทึกล่าสุดโดย ${userName} เมื่อ ${new Date().toLocaleString("th-TH")}`;
+      showToast("🎉 บันทึกข้อมูลแบบสำรวจสำเร็จเรียบร้อย! ระบบนำท่านกลับสู่หน้าแรก", "success");
+      
+      // Requirement 1: After submit, app goes back to landing page
+      resetToLandingPage();
+
     } catch (err) {
       showToast("เกิดข้อผิดพลาดในการบันทึก: " + err.message, "error");
     } finally {
@@ -421,6 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
         adminDashboardSection.style.display = "block";
         showToast("เข้าสู่ระบบ Admin สำเร็จ", "success");
         loadAdminSurveys();
+        loadAdminDimensions();
       } else {
         showToast("รหัสผ่านไม่ถูกต้อง", "error");
       }
@@ -473,6 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Requirement 5: Admin browse data summarized 1 line per survey/user
   async function loadAdminSurveys() {
     showSpinner(true);
     try {
@@ -503,14 +551,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tr.innerHTML = `
           <td>${row.survey_id || "-"}</td>
-          <td>${row.region || "-"}</td>
           <td>${row.mall || "-"}</td>
+          <td>${row.region || "-"}</td>
           <td>${row.store_name || "-"}</td>
-          <td>${row.brand_name || "-"}</td>
-          <td>${row.answer_choice_name || "-"}</td>
-          <td style="font-weight: bold; color: var(--accent);">${row.value ?? 0}</td>
           <td>${row.user || "user"}</td>
+          <td>${row.phone || "-"}</td>
           <td>${lastUpdateStr}</td>
+          <td style="font-weight: bold; color: var(--accent); text-align: center;">${row.total_pc ?? 0} คน</td>
+          <td style="font-size: 0.8rem; color: var(--text-main);">${row.summary || '<span style="color:var(--text-muted)">ไม่มีพนักงาน PC</span>'}</td>
           <td>
             <button class="btn btn-danger btn-delete-survey" data-survey-id="${row.survey_id}" style="padding: 4px 8px; font-size: 0.75rem;">
               🗑️ ลบ
@@ -548,6 +596,105 @@ document.addEventListener("DOMContentLoaded", () => {
     } finally {
       showSpinner(false);
     }
+  }
+
+  // Requirement 3: Admin page can browse all dimension and set active/inactive
+  async function loadAdminDimensions() {
+    showSpinner(true);
+    try {
+      const res = await fetch("/api/dimensions?includeInactive=true");
+      const data = await res.json();
+
+      allAdminStores = data.stores || [];
+      allAdminBrands = data.brands || [];
+      allAdminAnswerChoices = data.answerChoices || [];
+
+      renderAdminDimensionsTable();
+    } catch (err) {
+      showToast("ไม่สามารถโหลดมิติข้อมูลแอดมินได้: " + err.message, "error");
+    } finally {
+      showSpinner(false);
+    }
+  }
+
+  selectDimType.addEventListener("change", renderAdminDimensionsTable);
+
+  function renderAdminDimensionsTable() {
+    const dimType = selectDimType.value;
+    tblAdminDimensionsBody.innerHTML = "";
+
+    let items = [];
+    if (dimType === "stores") items = allAdminStores;
+    if (dimType === "brands") items = allAdminBrands;
+    if (dimType === "answerChoices") items = allAdminAnswerChoices;
+
+    if (items.length === 0) {
+      tblAdminDimensionsBody.innerHTML =
+        '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">ไม่มีรายการมิติข้อมูล</td></tr>';
+      return;
+    }
+
+    items.forEach((item) => {
+      const tr = document.createElement("tr");
+      const isActive = item.is_active === 1;
+
+      let detailText = item.name || item.store_name;
+      if (dimType === "stores") {
+        detailText = `${item.store_name} (ห้าง: ${item.mall} | ภูมิภาค: ${item.region} | จังหวัด: ${item.province})`;
+      }
+
+      const statusBadge = isActive
+        ? '<span style="color: var(--accent); background: rgba(16,185,129,0.15); padding: 4px 10px; border-radius: 12px; font-weight:600;">Active (เปิดใช้งาน)</span>'
+        : '<span style="color: var(--danger); background: rgba(239,68,68,0.15); padding: 4px 10px; border-radius: 12px; font-weight:600;">Inactive (ปิดใช้งาน)</span>';
+
+      const toggleBtnText = isActive ? "🔴 ปิดใช้งาน (Disable)" : "🟢 เปิดใช้งาน (Enable)";
+      const toggleBtnClass = isActive ? "btn-danger" : "btn-accent";
+
+      tr.innerHTML = `
+        <td>${item.id}</td>
+        <td>${detailText}</td>
+        <td>${statusBadge}</td>
+        <td>
+          <button class="btn ${toggleBtnClass} btn-toggle-dim" data-dim="${dimType}" data-id="${item.id}" data-active="${isActive ? 'true' : 'false'}" style="padding: 6px 12px; font-size: 0.8rem;">
+            ${toggleBtnText}
+          </button>
+        </td>
+      `;
+
+      tblAdminDimensionsBody.appendChild(tr);
+    });
+
+    // Attach Toggle Listeners
+    document.querySelectorAll(".btn-toggle-dim").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const dim = btn.getAttribute("data-dim");
+        const id = parseInt(btn.getAttribute("data-id") || "0", 10);
+        const currentActive = btn.getAttribute("data-active") === "true";
+        const newActive = !currentActive;
+
+        showSpinner(true);
+        try {
+          const res = await fetch("/api/admin/dimension/toggle", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ dimension: dim, id, isActive: newActive }),
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            showToast(`อัปเดตสถานะ Active/Inactive สำเร็จ`, "success");
+            loadDimensions(); // Refresh client view
+            loadAdminDimensions(); // Refresh admin view
+          } else {
+            showToast("อัปเดตไม่สำเร็จ: " + data.error, "error");
+          }
+        } catch (err) {
+          showToast("เกิดข้อผิดพลาด: " + err.message, "error");
+        } finally {
+          showSpinner(false);
+        }
+      });
+    });
   }
 
   btnAdminSearch.addEventListener("click", loadAdminSurveys);
@@ -601,6 +748,7 @@ document.addEventListener("DOMContentLoaded", () => {
           showToast(`นำเข้า ${label} สำเร็จจำนวน ${data.imported} รายการ`, "success");
           fileInput.value = "";
           loadDimensions();
+          loadAdminDimensions();
         } else {
           showToast(`นำเข้าล้มเหลว: ${data.error}`, "error");
         }
@@ -638,6 +786,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (res.ok && data.success) {
         showToast("รีเซ็ตมิติข้อมูลทั้งหมดสำเร็จ", "success");
         loadDimensions();
+        loadAdminDimensions();
         loadAdminSurveys();
       } else {
         showToast("เกิดข้อผิดพลาด: " + data.error, "error");

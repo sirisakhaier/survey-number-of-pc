@@ -35,17 +35,18 @@
         <span>เลือกสถานที่และข้อมูลสาขา (Store Selection)</span>
       </div>
 
+      <!-- Order: 1. ห้าง -> 2. ภูมิภาค -> 3. สาขา -->
       <div class="form-group">
-        <label for="selectRegion">1. เลือกภูมิภาค (Region)</label>
-        <select id="selectRegion" class="form-select">
-          <option value="">-- กรุณาเลือกภูมิภาค --</option>
+        <label for="selectMall">1. เลือกห้าง/ช่องทาง (Mall)</label>
+        <select id="selectMall" class="form-select">
+          <option value="">-- กรุณาเลือกห้าง/ช่องทาง --</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label for="selectMall">2. เลือกห้าง/ช่องทาง (Mall)</label>
-        <select id="selectMall" class="form-select" disabled>
-          <option value="">-- กรุณาเลือกห้าง/ช่องทาง --</option>
+        <label for="selectRegion">2. เลือกภูมิภาค (Region)</label>
+        <select id="selectRegion" class="form-select" disabled>
+          <option value="">-- กรุณาเลือกภูมิภาค --</option>
         </select>
       </div>
 
@@ -56,9 +57,16 @@
         </select>
       </div>
 
-      <div class="form-group">
-        <label for="inputUserName">4. ชื่อผู้กรอกข้อมูล (User Name)</label>
-        <input type="text" id="inputUserName" class="form-input" placeholder="ระบุชื่อผู้กรอกข้อมูล (ไม่ระบุจะใช้ 'user')" value="user">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+        <div class="form-group">
+          <label for="inputUserName">4. ชื่อผู้กรอกข้อมูล (User Name) <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="inputUserName" class="form-input" placeholder="ระบุชื่อผู้กรอกข้อมูล">
+        </div>
+
+        <div class="form-group">
+          <label for="inputUserPhone">5. เบอร์โทรศัพท์ (Phone Number) <span style="color:var(--danger)">*</span></label>
+          <input type="tel" id="inputUserPhone" class="form-input" placeholder="ระบุเบอร์โทรศัพท์ติดต่อ">
+        </div>
       </div>
 
       <div style="margin-top: 24px;">
@@ -73,7 +81,8 @@
       <div class="store-badge">
         <div class="store-badge-info">
           <h2 id="lblBadgeStoreName">สาขา: -</h2>
-          <p id="lblBadgeStoreDetail">ภูมิภาค: - | ห้าง: - | จังหวัด: -</p>
+          <p id="lblBadgeStoreDetail">ห้าง: - | ภูมิภาค: - | จังหวัด: -</p>
+          <p id="lblBadgeUserInfo" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 2px;"></p>
           <p id="lblBadgeSurveyStatus" style="color: var(--accent); font-size: 0.8rem; margin-top: 4px;"></p>
         </div>
         <div>
@@ -89,7 +98,7 @@
       </div>
 
       <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 16px;">
-        * กรอกจำนวนตัวเลขเต็ม (0 หรือมากกว่า) ในแต่ละช่องตามประเภทพนักงาน PC ของแต่ละแบรนด์
+        * กรอกจำนวนตัวเลขเต็ม (0 หรือมากกว่า) ในแต่ละช่องตามประเภทพนักงาน PC ของแต่ละแบรนด์ (ระบบจะไม่บันทึกช่องที่มีค่าเป็น 0 เพื่อประหยัดพื้นที่)
       </p>
 
       <div class="table-wrapper">
@@ -97,15 +106,12 @@
           <thead>
             <tr id="matrixHeaderRow">
               <th>แบรนด์ (Brand)</th>
-              <!-- Dynamic Answer Choices -->
               <th>รวม (Total)</th>
             </tr>
           </thead>
           <tbody id="matrixBody">
-            <!-- Dynamic Brand Rows -->
           </tbody>
           <tfoot id="matrixFooter">
-            <!-- Column Totals -->
           </tfoot>
         </table>
       </div>
@@ -142,11 +148,12 @@
       <!-- Admin Panel Dashboard Content -->
       <div id="adminDashboardSection" style="display: none;">
         <div class="tab-nav">
-          <button class="tab-btn active" data-tab="tabSurveys">📊 ตรวจสอบผลการสำรวจ (Browse Results)</button>
-          <button class="tab-btn" data-tab="tabDimensions">📂 จัดการมิติข้อมูล (Dimensions & Data)</button>
+          <button class="tab-btn active" data-tab="tabSurveys">📊 ผลการสำรวจ (1 รายการ / 1 สาขา)</button>
+          <button class="tab-btn" data-tab="tabManageDimensions">⚙️ เปิด/ปิดมิติข้อมูล (Active/Inactive)</button>
+          <button class="tab-btn" data-tab="tabDimensions">📂 นำเข้ามิติข้อมูล (Import CSV)</button>
         </div>
 
-        <!-- Tab 1: Browse Survey Results -->
+        <!-- Tab 1: Browse Survey Results (1 row per survey) -->
         <div id="tabSurveys" class="tab-content active">
           <div class="filter-row">
             <div>
@@ -162,14 +169,14 @@
               </select>
             </div>
             <div>
-              <label style="font-size: 0.8rem; color: var(--text-muted);">กรองตามแบรนด์</label>
+              <label style="font-size: 0.8rem; color: var(--text-muted);">กรองตามแบรนด์ที่มี PC</label>
               <select id="filterAdminBrand" class="form-select">
                 <option value="">-- ทุกแบรนด์ --</option>
               </select>
             </div>
           </div>
 
-          <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+          <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
             <button id="btnAdminSearch" class="btn btn-primary">🔍 กรองข้อมูล</button>
             <button id="btnAdminExportCSV" class="btn btn-accent">📥 ส่งออก CSV (Export CSV)</button>
             <button id="btnAdminClearSurveys" class="btn btn-danger" style="margin-left: auto;">🗑️ ล้างข้อมูลสำรวจทั้งหมด</button>
@@ -180,14 +187,14 @@
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>ภูมิภาค</th>
                   <th>ห้าง</th>
+                  <th>ภูมิภาค</th>
                   <th>สาขา</th>
-                  <th>แบรนด์</th>
-                  <th>ประเภท PC</th>
-                  <th>จำนวน</th>
                   <th>ผู้กรอก</th>
+                  <th>เบอร์โทร</th>
                   <th>วันที่อัปเดต</th>
+                  <th>จำนวน PC รวม</th>
+                  <th>สรุปรายการแบรนด์และ PC</th>
                   <th>จัดการ</th>
                 </tr>
               </thead>
@@ -198,7 +205,34 @@
           </div>
         </div>
 
-        <!-- Tab 2: Dimension Data Management -->
+        <!-- Tab 2: Manage Dimensions (Active / Inactive Toggle) -->
+        <div id="tabManageDimensions" class="tab-content">
+          <div style="margin-bottom: 16px; display: flex; gap: 12px; align-items: center;">
+            <label style="font-weight: 600;">เลือกมิติข้อมูลที่ต้องการจัดการ:</label>
+            <select id="selectDimType" class="form-select" style="max-width: 250px;">
+              <option value="stores">สาขา (Stores)</option>
+              <option value="brands">แบรนด์ (Brands)</option>
+              <option value="answerChoices">ประเภท PC (Answer Choices)</option>
+            </select>
+          </div>
+
+          <div class="table-wrapper" style="max-height: 450px;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>ชื่อ / รายละเอียด</th>
+                  <th>สถานะ (Status)</th>
+                  <th>สวิตช์เปิด/ปิด (Toggle Active)</th>
+                </tr>
+              </thead>
+              <tbody id="tblAdminDimensionsBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 3: Dimension Data Import CSV -->
         <div id="tabDimensions" class="tab-content">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 24px;">
 
