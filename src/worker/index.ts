@@ -406,14 +406,15 @@ export default {
         return jsonResponse({ results: results || [] });
       }
 
-      // 13. GET /api/admin/export
+      // 13. GET /api/admin/export - Includes STORE_ID and STORE_NAME in exported CSV
       if (method === "GET" && path === "/api/admin/export") {
         const query = `
           SELECT 
+            s.id as store_id,
+            s.store_name,
             s.region,
             s.mall,
             s.province,
-            s.store_name,
             sh.last_update,
             sh.user,
             sh.phone,
@@ -430,14 +431,15 @@ export default {
 
         const { results } = await env.DB.prepare(query).all();
 
-        let csv = "\uFEFFภูมิภาค,ห้าง,จังหวัด,ชื่อสาขา,วันที่อัปเดต,ผู้กรอก,เบอร์โทร,แบรนด์,ประเภทPC,จำนวน\n";
+        let csv = "\uFEFFSTORE_ID,STORE_NAME,ภูมิภาค,ห้าง,จังหวัด,วันที่อัปเดต,ผู้กรอก,เบอร์โทร,แบรนด์,ประเภทPC,จำนวน\n";
         if (results) {
           for (const r of results as any[]) {
             const line = [
+              `"${r.store_id ?? ''}"`,
+              `"${r.store_name || ''}"`,
               `"${r.region || ''}"`,
               `"${r.mall || ''}"`,
               `"${r.province || ''}"`,
-              `"${r.store_name || ''}"`,
               `"${r.last_update || ''}"`,
               `"${r.user || ''}"`,
               `"${r.phone || ''}"`,

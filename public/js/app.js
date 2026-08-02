@@ -715,7 +715,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tblAdminSurveysBody.innerHTML = "";
       if (!data.results || data.results.length === 0) {
         tblAdminSurveysBody.innerHTML =
-          '<tr><td colspan="10" style="text-align: center; color: var(--text-muted);">ไม่พบข้อมูลแบบสำรวจตามเงื่อนไขที่เลือก</td></tr>';
+          '<tr><td colspan="11" style="text-align: center; color: var(--text-muted);">ไม่พบข้อมูลแบบสำรวจตามเงื่อนไขที่เลือก</td></tr>';
         return;
       }
 
@@ -727,9 +727,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tr.innerHTML = `
           <td>${row.survey_id || "-"}</td>
+          <td style="font-weight:600; color:var(--primary);">${row.store_id || "-"}</td>
+          <td style="font-weight:600;">${row.store_name || "-"}</td>
           <td>${row.mall || "-"}</td>
           <td>${row.region || "-"}</td>
-          <td>${row.store_name || "-"}</td>
           <td>${row.user || "user"}</td>
           <td>${row.phone || "-"}</td>
           <td>${lastUpdateStr}</td>
