@@ -565,7 +565,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const details = [];
-    const inputs = document.querySelectorAll(".cell-input");
+    // IMPORTANT: only read from desktop table inputs (data-source="table") as source-of-truth.
+    // Mobile card inputs (data-source="card") are kept in sync but must NOT be collected again
+    // — doing so would create duplicate brand+choice entries causing a UNIQUE constraint error.
+    const inputs = document.querySelectorAll('.cell-input[data-source="table"]');
 
     inputs.forEach((input) => {
       const brandId = parseInt(input.dataset.brandId || "0", 10);
