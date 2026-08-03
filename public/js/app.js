@@ -43,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const statActiveRegions = document.getElementById("statActiveRegions");
   const statActiveBrands = document.getElementById("statActiveBrands");
 
+  const filterAdminMall = document.getElementById("filterAdminMall");
   const filterAdminRegion = document.getElementById("filterAdminRegion");
   const filterAdminStore = document.getElementById("filterAdminStore");
   const filterAdminBrand = document.getElementById("filterAdminBrand");
@@ -365,7 +366,8 @@ document.addEventListener("DOMContentLoaded", () => {
         input.type = "number";
         input.min = "0";
         input.step = "1";
-        input.value = "0";
+        input.value = "";  // Start blank — user sees empty, not 0
+        input.placeholder = "";
         input.className = "cell-input";
         input.dataset.brandId = brand.id.toString();
         input.dataset.choiceId = choice.id.toString();
@@ -457,7 +459,8 @@ document.addEventListener("DOMContentLoaded", () => {
           inp.id = `card_${brand.id}_${choice.id}`;
           inp.min = "0";
           inp.step = "1";
-          inp.value = "0";
+          inp.value = "";  // Start blank
+          inp.placeholder = "";
           inp.className = "cell-input";
           inp.dataset.brandId = brand.id.toString();
           inp.dataset.choiceId = choice.id.toString();
@@ -547,9 +550,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   btnClearMatrix.addEventListener("click", () => {
     const inputs = document.querySelectorAll(".cell-input");
-    inputs.forEach((input) => (input.value = "0"));
+    inputs.forEach((input) => (input.value = ""));
     calculateMatrixTotals();
-    showToast("รีเซ็ตตัวเลขทั้งหมดเป็น 0 เรียบร้อย", "info");
+    showToast("ล้างตัวเลขทั้งหมดเรียบร้อย", "info");
   });
 
   // --- Save Survey ---
@@ -808,6 +811,41 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function populateAdminFilters() {
+    // Populate mall filter
+    if (filterAdminMall) {
+      filterAdminMall.innerHTML = '<option value="">ทุกห้าง/ช่องทาง</option>';
+      const malls = Array.from(new Set(allStores.map((s) => s.mall))).sort();
+      malls.forEach((m) => {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        filterAdminMall.appendChild(opt);
+      });
+
+      // When mall changes: cascade region and store dropdowns
+      filterAdminMall.addEventListener("change", () => {
+        const selectedMall = filterAdminMall.value;
+        const filtered = selectedMall ? allStores.filter((s) => s.mall === selectedMall) : allStores;
+
+        filterAdminRegion.innerHTML = '<option value="">-- ทุกภูมิภาค --</option>';
+        const regions = Array.from(new Set(filtered.map((s) => s.region))).sort();
+        regions.forEach((r) => {
+          const opt = document.createElement("option");
+          opt.value = r;
+          opt.textContent = r;
+          filterAdminRegion.appendChild(opt);
+        });
+
+        filterAdminStore.innerHTML = '<option value="">-- ทุกสาขา --</option>';
+        filtered.forEach((s) => {
+          const opt = document.createElement("option");
+          opt.value = s.id.toString();
+          opt.textContent = `${s.store_name} (${s.province})`;
+          filterAdminStore.appendChild(opt);
+        });
+      });
+    }
+
     filterAdminRegion.innerHTML = '<option value="">-- ทุกภูมิภาค --</option>';
     filterAdminStore.innerHTML = '<option value="">-- ทุกสาขา --</option>';
     filterAdminBrand.innerHTML = '<option value="">-- ทุกแบรนด์ --</option>';
@@ -838,11 +876,13 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadAdminSurveys() {
     showSpinner(true);
     try {
+      const mall = filterAdminMall ? filterAdminMall.value : "";
       const region = filterAdminRegion.value;
       const storeId = filterAdminStore.value;
       const brandId = filterAdminBrand.value;
 
       const params = new URLSearchParams();
+      if (mall) params.append("mall", mall);
       if (region) params.append("region", region);
       if (storeId) params.append("storeId", storeId);
       if (brandId) params.append("brandId", brandId);

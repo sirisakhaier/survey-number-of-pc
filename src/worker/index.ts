@@ -359,6 +359,7 @@ export default {
 
       // 12. GET /api/admin/surveys (1 line per survey/user)
       if (method === "GET" && path === "/api/admin/surveys") {
+        const mallFilter = url.searchParams.get("mall");
         const regionFilter = url.searchParams.get("region");
         const storeFilter = url.searchParams.get("storeId");
         const brandFilter = url.searchParams.get("brandId");
@@ -387,6 +388,10 @@ export default {
         `;
 
         const params: any[] = [];
+        if (mallFilter) {
+          query += " AND s.mall = ?";
+          params.push(mallFilter);
+        }
         if (regionFilter) {
           query += " AND s.region = ?";
           params.push(regionFilter);
