@@ -65,7 +65,10 @@
       <div class="user-info-grid">
         <div class="form-group">
           <label for="inputUserName">4. ชื่อผู้กรอกข้อมูล (User Name) <span style="color:var(--danger)">*</span></label>
-          <input type="text" id="inputUserName" class="form-input" placeholder="ระบุชื่อผู้กรอกข้อมูล">
+          <input type="text" id="inputUserName" class="form-input"
+            placeholder="ระบุชื่อผู้กรอกข้อมูล"
+            autocomplete="off"
+            name="survey_username_field">
         </div>
 
         <div class="form-group">
@@ -74,7 +77,9 @@
             placeholder="0xxxxxxxxx"
             maxlength="10"
             pattern="0[0-9]{9}"
-            inputmode="numeric">
+            inputmode="numeric"
+            autocomplete="off"
+            name="survey_phone_field">
           <span id="phoneValidHint" style="font-size:0.78rem; color:var(--text-muted); margin-top:4px; display:block;">กรอก 10 หลัก เริ่มต้นด้วย 0 เช่น 0812345678</span>
         </div>
       </div>

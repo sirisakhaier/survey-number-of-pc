@@ -1112,5 +1112,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // --- Start App ---
+  // Force-clear user fields on every page load (prevents browser autocomplete restoring values)
+  inputUserName.value = "";
+  inputUserPhone.value = "";
   loadDimensions();
 });
