@@ -216,15 +216,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
   selectStore.addEventListener("change", checkStartSurveyState);
   inputUserName.addEventListener("input", checkStartSurveyState);
-  inputUserPhone.addEventListener("input", checkStartSurveyState);
+
+  // Phone input: enforce numeric only, max 10 digits, must start with 0
+  inputUserPhone.addEventListener("input", () => {
+    // Strip non-numeric characters
+    let val = inputUserPhone.value.replace(/\D/g, "");
+    // Limit to 10 digits
+    if (val.length > 10) val = val.slice(0, 10);
+    inputUserPhone.value = val;
+
+    const hint = document.getElementById("phoneValidHint");
+    if (!hint) { checkStartSurveyState(); return; }
+
+    if (val.length === 0) {
+      hint.style.color = "var(--text-muted)";
+      hint.textContent = "กรอก 10 หลัก เริ่มต้นด้วย 0 เช่น 0812345678";
+    } else if (!val.startsWith("0")) {
+      hint.style.color = "var(--danger)";
+      hint.textContent = "❌ ต้องเริ่มต้นด้วยเลข 0";
+    } else if (val.length < 10) {
+      hint.style.color = "var(--warning)";
+      hint.textContent = `ℹ️ กรอกเพิ่มอีก ${10 - val.length} หลัก`;
+    } else {
+      hint.style.color = "#16a34a";
+      hint.textContent = "✅ เบอร์โทรถูกต้อง";
+    }
+
+    checkStartSurveyState();
+  });
 
   function checkStartSurveyState() {
     const storeId = parseInt(selectStore.value, 10);
     currentSelectedStore = allStores.find((s) => s.id === storeId) || null;
     const hasName = inputUserName.value.trim().length > 0;
-    const hasPhone = inputUserPhone.value.trim().length > 0;
+    const phone = inputUserPhone.value.trim();
+    const validPhone = phone.length === 10 && phone.startsWith("0") && /^\d{10}$/.test(phone);
 
-    btnStartSurvey.disabled = !(currentSelectedStore && hasName && hasPhone);
+    btnStartSurvey.disabled = !(currentSelectedStore && hasName && validPhone);
   }
 
   // --- Start Survey & Render Matrix ---
@@ -294,10 +322,18 @@ document.addEventListener("DOMContentLoaded", () => {
     viewSurvey.style.display = "none";
     viewLanding.style.display = "block";
     selectMall.value = "";
-    selectRegion.innerHTML = '<option value="">-- กรุณาเลือกภูมิภาค --</option>';
+    selectRegion.innerHTML = '<option value="">กรุณาเลือกภูมิภาค --</option>';
     selectRegion.disabled = true;
     selectStore.innerHTML = '<option value="">-- กรุณาเลือกสาขา --</option>';
     selectStore.disabled = true;
+    // Clear user name and phone fields
+    inputUserName.value = "";
+    inputUserPhone.value = "";
+    const hint = document.getElementById("phoneValidHint");
+    if (hint) {
+      hint.style.color = "var(--text-muted)";
+      hint.textContent = "กรอก 10 หลัก เริ่มต้นด้วย 0 เช่น 0812345678";
+    }
     currentSelectedStore = null;
     btnStartSurvey.disabled = true;
   }

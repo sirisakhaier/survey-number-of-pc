@@ -70,7 +70,12 @@
 
         <div class="form-group">
           <label for="inputUserPhone">5. เบอร์โทรศัพท์ (Phone Number) <span style="color:var(--danger)">*</span></label>
-          <input type="tel" id="inputUserPhone" class="form-input" placeholder="ระบุเบอร์โทรศัพท์ติดต่อ">
+          <input type="tel" id="inputUserPhone" class="form-input"
+            placeholder="0xxxxxxxxx"
+            maxlength="10"
+            pattern="0[0-9]{9}"
+            inputmode="numeric">
+          <span id="phoneValidHint" style="font-size:0.78rem; color:var(--text-muted); margin-top:4px; display:block;">กรอก 10 หลัก เริ่มต้นด้วย 0 เช่น 0812345678</span>
         </div>
       </div>
 
@@ -181,11 +186,11 @@
       <!-- Full-Screen Admin Dashboard Content -->
       <div id="adminDashboardSection" style="display: none;">
         
-        <div class="tab-nav">
-          <button class="tab-btn active" data-tab="tabExecutiveStats">📈 สรุปภาพรวมผู้บริหาร (Executive Dashboard)</button>
-          <button class="tab-btn" data-tab="tabSurveys">📊 ผลการสำรวจ (1 รายการ / 1 สาขา)</button>
-          <button class="tab-btn" data-tab="tabManageDimensions">⚙️ เปิด/ปิดมิติข้อมูล (Active/Inactive)</button>
-          <button class="tab-btn" data-tab="tabDimensions">📂 นำเข้ามิติข้อมูล (Import CSV)</button>
+        <div class="tab-nav" id="adminTabNav">
+          <button class="tab-btn active" data-tab="tabExecutiveStats" data-short="📈 Dashboard">📈 สรุปภาพรวมผู้บริหาร (Executive Dashboard)</button>
+          <button class="tab-btn" data-tab="tabSurveys" data-short="📊 ผลสำรวจ">📊 ผลการสำรวจ (1 รายการ / 1 สาขา)</button>
+          <button class="tab-btn" data-tab="tabManageDimensions" data-short="⚙️ เปิด/ปิด">⚙️ เปิด/ปิดมิติข้อมูล (Active/Inactive)</button>
+          <button class="tab-btn" data-tab="tabDimensions" data-short="📂 Import">📂 นำเข้ามิติข้อมูล (Import CSV)</button>
         </div>
 
         <!-- TAB 1: Executive Dashboard with Key Metrics & Charts -->

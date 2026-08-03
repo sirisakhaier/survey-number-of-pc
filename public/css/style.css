@@ -877,3 +877,104 @@ footer {
   .card { padding: 18px; }
   .user-info-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================================
+   ADMIN MOBILE IMPROVEMENTS (≤ 820px)
+   Tab nav becomes a sticky bottom bar with icon + short label
+   ============================================================ */
+@media (max-width: 820px) {
+  /* Admin topbar: compact on mobile */
+  .admin-topbar { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
+  .admin-topbar-brand { gap: 10px; }
+  .admin-topbar-brand h2 { font-size: 0.95rem; }
+  .admin-topbar-brand p { display: none; }
+  .admin-topbar > div:last-child .btn { padding: 7px 10px; font-size: 0.78rem; }
+
+  /* Workspace body: give bottom padding for the fixed tab bar */
+  .admin-workspace-body { padding: 14px 12px 90px; }
+
+  /* Fixed bottom nav bar for admin tabs */
+  #adminTabNav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+    border-top: 2px solid var(--haier-blue);
+    background: var(--header-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Each tab button: equal-width, stacked icon + label */
+  #adminTabNav .tab-btn {
+    flex: 1;
+    padding: 8px 4px 10px;
+    font-size: 0;   /* Hide full text via font-size */
+    border-bottom: none;
+    border-top: 3px solid transparent;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: var(--text-muted);
+    transition: var(--transition);
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  /* Show only the data-short content via ::after pseudo element */
+  #adminTabNav .tab-btn::after {
+    content: attr(data-short);
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+  }
+
+  #adminTabNav .tab-btn.active {
+    color: var(--tab-active);
+    border-top-color: var(--tab-active);
+    background: var(--badge-bg);
+  }
+
+  /* Auth card: full width on mobile */
+  #adminAuthSection {
+    max-width: 100% !important;
+    margin: 16px 0 !important;
+  }
+
+  /* Stats grid: 2 columns on mobile */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-card { padding: 12px; gap: 10px; }
+  .stat-icon { width: 40px; height: 40px; font-size: 22px; }
+  .stat-info h3 { font-size: 1.15rem; }
+
+  /* Charts grid: single column */
+  .charts-grid { grid-template-columns: 1fr; }
+  .chart-card.style-full-width { grid-column: 1; }
+  .chart-container { height: 220px; }
+
+  /* Filter row: stack */
+  .filter-row { grid-template-columns: 1fr; }
+}
+
+/* Very small phones (≤ 400px): tighter admin */
+@media (max-width: 400px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  #adminTabNav .tab-btn::after { font-size: 0.62rem; }
+}
+
