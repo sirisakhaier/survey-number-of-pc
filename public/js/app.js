@@ -42,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const statTotalPC = document.getElementById("statTotalPC");
   const statActiveRegions = document.getElementById("statActiveRegions");
   const statActiveBrands = document.getElementById("statActiveBrands");
+  const selectExecMall = document.getElementById("selectExecMall");
 
   const filterAdminMall = document.getElementById("filterAdminMall");
   const filterAdminRegion = document.getElementById("filterAdminRegion");
@@ -682,7 +683,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Executive Dashboard Stats & Visual Charts ---
   async function loadExecutiveDashboardStats() {
     try {
-      const res = await fetch("/api/admin/stats");
+      const mall = selectExecMall ? selectExecMall.value : "";
+      const url = mall ? `/api/admin/stats?mall=${encodeURIComponent(mall)}` : "/api/admin/stats";
+      const res = await fetch(url);
       if (!res.ok) return;
       const data = await res.json();
 
@@ -811,6 +814,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function populateAdminFilters() {
+    // Populate Executive Dashboard Mall Filter
+    if (selectExecMall) {
+      selectExecMall.innerHTML = '<option value="">-- ทุกห้าง/ช่องทาง (All Malls) --</option>';
+      const malls = Array.from(new Set(allStores.map((s) => s.mall))).sort();
+      malls.forEach((m) => {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = m;
+        selectExecMall.appendChild(opt);
+      });
+
+      selectExecMall.removeEventListener("change", loadExecutiveDashboardStats);
+      selectExecMall.addEventListener("change", loadExecutiveDashboardStats);
+    }
+
     // Populate mall filter
     if (filterAdminMall) {
       filterAdminMall.innerHTML = '<option value="">ทุกห้าง/ช่องทาง</option>';

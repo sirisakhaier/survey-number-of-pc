@@ -193,40 +193,107 @@ export default {
 
       // 6. GET /api/admin/stats - Executive Summary & Dashboard Charts Data
       if (method === "GET" && path === "/api/admin/stats") {
-        const totalStoresRes: any = await env.DB.prepare("SELECT COUNT(*) as count FROM stores WHERE is_active = 1").first();
-        const totalSurveysRes: any = await env.DB.prepare("SELECT COUNT(*) as count FROM survey_header").first();
-        const totalPcRes: any = await env.DB.prepare("SELECT COALESCE(SUM(value), 0) as total FROM survey_detail WHERE value > 0").first();
+        const mallFilter = url.searchParams.get("mall");
+
+        let storeWhere = "WHERE is_active = 1";
+        let headerWhere = "WHERE 1=1";
+        const storeParams: any[] = [];
+        const headerParams: any[] = [];
+
+        if (mallFilter) {
+          storeWhere += " AND mall = ?";
+          storeParams.push(mallFilter);
+
+          headerWhere += " AND store_id IN (SELECT id FROM stores WHERE mall = ? AND is_active = 1)";
+          headerParams.push(mallFilter);
+        }
+
+        const totalStoresRes: any = storeParams.length > 0 
+          ? await env.DB.prepare(`SELECT COUNT(*) as count FROM stores ${storeWhere}`).bind(...storeParams).first()
+          : await env.DB.prepare(`SELECT COUNT(*) as count FROM stores ${storeWhere}`).first();
+
+        const totalSurveysRes: any = headerParams.length > 0
+          ? await env.DB.prepare(`SELECT COUNT(*) as count FROM survey_header ${headerWhere}`).bind(...headerParams).first()
+          : await env.DB.prepare(`SELECT COUNT(*) as count FROM survey_header ${headerWhere}`).first();
+
+        const totalPcQuery = mallFilter
+          ? `SELECT COALESCE(SUM(sd.value), 0) as total FROM survey_detail sd JOIN survey_header sh ON sd.survey_id = sh.id JOIN stores s ON sh.store_id = s.id WHERE sd.value > 0 AND s.mall = ?`
+          : `SELECT COALESCE(SUM(sd.value), 0) as total FROM survey_detail sd WHERE sd.value > 0`;
+        const totalPcRes: any = mallFilter
+          ? await env.DB.prepare(totalPcQuery).bind(mallFilter).first()
+          : await env.DB.prepare(totalPcQuery).first();
 
         // PC Count by Brand
-        const byBrandRes = await env.DB.prepare(`
-          SELECT b.id, b.name, COALESCE(SUM(sd.value), 0) as total_pc
-          FROM brands b
-          LEFT JOIN survey_detail sd ON b.id = sd.brand_id AND sd.value > 0
-          WHERE b.is_active = 1
-          GROUP BY b.id, b.name
-          ORDER BY total_pc DESC, b.name
-        `).all();
+        const byBrandQuery = mallFilter
+          ? `
+            SELECT b.id, b.name, COALESCE(SUM(sd.value), 0) as total_pc
+            FROM brands b
+            LEFT JOIN survey_detail sd ON b.id = sd.brand_id AND sd.value > 0
+            LEFT JOIN survey_header sh ON sd.survey_id = sh.id
+            LEFT JOIN stores s ON sh.store_id = s.id AND s.mall = ?
+            WHERE b.is_active = 1
+            GROUP BY b.id, b.name
+            ORDER BY total_pc DESC, b.name
+          `
+          : `
+            SELECT b.id, b.name, COALESCE(SUM(sd.value), 0) as total_pc
+            FROM brands b
+            LEFT JOIN survey_detail sd ON b.id = sd.brand_id AND sd.value > 0
+            WHERE b.is_active = 1
+            GROUP BY b.id, b.name
+            ORDER BY total_pc DESC, b.name
+          `;
+        const byBrandRes = mallFilter
+          ? await env.DB.prepare(byBrandQuery).bind(mallFilter).all()
+          : await env.DB.prepare(byBrandQuery).all();
 
         // PC Count by PC Choice / Employment Type
-        const byChoiceRes = await env.DB.prepare(`
-          SELECT ac.id, ac.name, COALESCE(SUM(sd.value), 0) as total_pc
-          FROM answer_choices ac
-          LEFT JOIN survey_detail sd ON ac.id = sd.answer_choice_id AND sd.value > 0
-          WHERE ac.is_active = 1
-          GROUP BY ac.id, ac.name
-          ORDER BY ac.id
-        `).all();
+        const byChoiceQuery = mallFilter
+          ? `
+            SELECT ac.id, ac.name, COALESCE(SUM(sd.value), 0) as total_pc
+            FROM answer_choices ac
+            LEFT JOIN survey_detail sd ON ac.id = sd.answer_choice_id AND sd.value > 0
+            LEFT JOIN survey_header sh ON sd.survey_id = sh.id
+            LEFT JOIN stores s ON sh.store_id = s.id AND s.mall = ?
+            WHERE ac.is_active = 1
+            GROUP BY ac.id, ac.name
+            ORDER BY ac.id
+          `
+          : `
+            SELECT ac.id, ac.name, COALESCE(SUM(sd.value), 0) as total_pc
+            FROM answer_choices ac
+            LEFT JOIN survey_detail sd ON ac.id = sd.answer_choice_id AND sd.value > 0
+            WHERE ac.is_active = 1
+            GROUP BY ac.id, ac.name
+            ORDER BY ac.id
+          `;
+        const byChoiceRes = mallFilter
+          ? await env.DB.prepare(byChoiceQuery).bind(mallFilter).all()
+          : await env.DB.prepare(byChoiceQuery).all();
 
         // PC Count by Region
-        const byRegionRes = await env.DB.prepare(`
-          SELECT s.region, COUNT(DISTINCT sh.id) as survey_count, COALESCE(SUM(sd.value), 0) as total_pc
-          FROM stores s
-          LEFT JOIN survey_header sh ON s.id = sh.store_id
-          LEFT JOIN survey_detail sd ON sh.id = sd.survey_id AND sd.value > 0
-          WHERE s.is_active = 1
-          GROUP BY s.region
-          ORDER BY total_pc DESC
-        `).all();
+        const byRegionQuery = mallFilter
+          ? `
+            SELECT s.region, COUNT(DISTINCT sh.id) as survey_count, COALESCE(SUM(sd.value), 0) as total_pc
+            FROM stores s
+            LEFT JOIN survey_header sh ON s.id = sh.store_id
+            LEFT JOIN survey_detail sd ON sh.id = sd.survey_id AND sd.value > 0
+            WHERE s.is_active = 1 AND s.mall = ?
+            GROUP BY s.region
+            ORDER BY total_pc DESC
+          `
+          : `
+            SELECT s.region, COUNT(DISTINCT sh.id) as survey_count, COALESCE(SUM(sd.value), 0) as total_pc
+            FROM stores s
+            LEFT JOIN survey_header sh ON s.id = sh.store_id
+            LEFT JOIN survey_detail sd ON sh.id = sd.survey_id AND sd.value > 0
+            WHERE s.is_active = 1
+            GROUP BY s.region
+            ORDER BY total_pc DESC
+          `;
+        const byRegionRes = mallFilter
+          ? await env.DB.prepare(byRegionQuery).bind(mallFilter).all()
+          : await env.DB.prepare(byRegionQuery).all();
 
         return jsonResponse({
           totalStores: totalStoresRes?.count || 0,
