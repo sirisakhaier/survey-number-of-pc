@@ -44,6 +44,8 @@
   --modal-bg: #ffffff;
   --input-focus-bg: #ffffff;
   --tab-active: var(--haier-blue);
+  --brand-card-bg: #f0f9ff;
+  --brand-card-border: #bae6fd;
 }
 
 /* --- Dark Theme --- */
@@ -72,6 +74,8 @@
   --modal-bg: #102242;
   --input-focus-bg: #09162a;
   --tab-active: var(--haier-accent-cyan);
+  --brand-card-bg: rgba(0, 90, 170, 0.12);
+  --brand-card-border: rgba(0, 164, 228, 0.3);
 }
 
 * {
@@ -90,7 +94,9 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Sticky Header */
+/* ============================================================
+   STICKY HEADER — Mobile-first collapsing layout
+   ============================================================ */
 header {
   position: sticky;
   top: 0;
@@ -99,10 +105,11 @@ header {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 3px solid var(--haier-blue);
-  padding: 10px 24px;
+  padding: 10px 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
   box-shadow: var(--shadow);
   transition: var(--transition);
 }
@@ -110,7 +117,8 @@ header {
 .header-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
+  min-width: 0; /* allow shrink */
 }
 
 /* Exact Haier Logo 4:3 Box Aspect Ratio Fix */
@@ -120,43 +128,54 @@ header {
   aspect-ratio: 4 / 3;
   object-fit: contain;
   border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .header-title h1 {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--header-title);
   letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-title p {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-/* Buttons */
+/* ============================================================
+   BUTTONS
+   ============================================================ */
 .btn {
   font-family: var(--font-main);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  padding: 10px 18px;
+  padding: 10px 16px;
   border-radius: var(--radius-md);
   border: none;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   transition: var(--transition);
   outline: none;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-primary {
@@ -169,6 +188,8 @@ header {
   transform: translateY(-2px);
   background: var(--primary-hover);
 }
+
+.btn-primary:active { transform: translateY(0); }
 
 .btn-accent {
   background: var(--accent);
@@ -185,9 +206,7 @@ header {
   color: white;
 }
 
-.btn-danger:hover {
-  background: var(--danger-hover);
-}
+.btn-danger:hover { background: var(--danger-hover); }
 
 .btn-secondary {
   background: var(--bg-input);
@@ -195,93 +214,99 @@ header {
   border: 1px solid var(--border-color);
 }
 
-.btn-secondary:hover {
-  border-color: var(--primary);
-}
+.btn-secondary:hover { border-color: var(--primary); }
 
 .btn-large {
-  padding: 14px 28px;
-  font-size: 1.05rem;
+  padding: 14px 24px;
+  font-size: 1rem;
   font-weight: 600;
   width: 100%;
   border-radius: var(--radius-md);
 }
 
-/* Container */
+/* ============================================================
+   LAYOUT CONTAINER
+   ============================================================ */
 .container {
-  max-width: 1100px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 16px;
 }
 
-/* Cards */
+/* ============================================================
+   CARDS
+   ============================================================ */
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 28px;
-  margin-bottom: 24px;
+  padding: 20px;
+  margin-bottom: 20px;
   box-shadow: var(--shadow);
   transition: var(--transition);
 }
 
 .card-title {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   color: var(--primary);
   border-bottom: 2px solid var(--border-color);
-  padding-bottom: 14px;
+  padding-bottom: 12px;
 }
 
 .card-title .step-number {
   background: var(--haier-blue);
   color: white;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
-/* Form Controls */
+/* ============================================================
+   FORM CONTROLS
+   ============================================================ */
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .form-group label {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--text-main);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .form-select, .form-input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 14px;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-main);
   font-family: var(--font-main);
-  font-size: 1rem;
+  font-size: 1rem;  /* 16px prevents iOS zoom */
   transition: var(--transition);
   appearance: none;
+  -webkit-appearance: none;
 }
 
 .form-select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23005AAA'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 14px center;
+  background-position: right 12px center;
   background-size: 18px;
-  padding-right: 40px;
+  padding-right: 38px;
 }
 
 .form-select:focus, .form-input:focus {
@@ -295,7 +320,18 @@ header {
   cursor: not-allowed;
 }
 
-/* Matrix Table Styling */
+/* ============================================================
+   USER INFO 2-COLUMN GRID (collapses on mobile)
+   ============================================================ */
+.user-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* ============================================================
+   MATRIX TABLE (Desktop-style: horizontal scroll)
+   ============================================================ */
 .table-wrapper {
   overflow-x: auto;
   border-radius: var(--radius-md);
@@ -308,11 +344,11 @@ header {
 .matrix-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 600px;
+  min-width: 500px;
 }
 
 .matrix-table th, .matrix-table td {
-  padding: 12px 14px;
+  padding: 10px 12px;
   text-align: center;
   border-bottom: 1px solid var(--border-color);
   border-right: 1px solid var(--border-color);
@@ -321,7 +357,7 @@ header {
 .matrix-table th {
   background: var(--haier-blue);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: white;
   position: sticky;
   top: 0;
@@ -336,23 +372,21 @@ header {
   position: sticky;
   left: 0;
   z-index: 5;
-  min-width: 140px;
+  min-width: 120px;
 }
 
-.matrix-table tr:hover td {
-  background: var(--table-hover);
-}
+.matrix-table tr:hover td { background: var(--table-hover); }
 
 .cell-input {
-  width: 80px;
-  padding: 8px 10px;
+  width: 72px;
+  padding: 8px 6px;
   text-align: center;
   background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   color: var(--text-main);
   font-family: var(--font-main);
-  font-size: 1rem;
+  font-size: 1rem; /* 16px min prevents iOS zoom */
   font-weight: 600;
   transition: var(--transition);
 }
@@ -370,32 +404,138 @@ header {
   background: var(--table-totals) !important;
 }
 
-/* Store Badge Header */
+/* ============================================================
+   MOBILE BRAND CARD LAYOUT (replaces table on small screens)
+   ============================================================ */
+.mobile-survey-hint {
+  display: none;
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: var(--badge-text);
+  margin-bottom: 14px;
+}
+
+.brand-cards-container {
+  display: none; /* shown on mobile via media query */
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.brand-card {
+  background: var(--brand-card-bg);
+  border: 1.5px solid var(--brand-card-border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  transition: var(--transition);
+}
+
+.brand-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.brand-card-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.brand-card-total {
+  background: var(--haier-blue);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.brand-card-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.brand-card-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brand-card-input-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-card-input-group .cell-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 1.1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.brand-card-input-group .cell-input:focus {
+  border-color: var(--haier-blue);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+/* Mobile grand total bar */
+.mobile-grand-total {
+  display: none;
+  background: var(--haier-blue);
+  color: white;
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+/* ============================================================
+   STORE BADGE
+   ============================================================ */
 .store-badge {
   background: var(--badge-bg);
   border: 1px solid var(--badge-border);
   border-radius: var(--radius-md);
-  padding: 18px;
-  margin-bottom: 20px;
+  padding: 14px;
+  margin-bottom: 16px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .store-badge-info h2 {
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   color: var(--text-main);
   font-weight: 700;
 }
 
 .store-badge-info p {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   color: var(--badge-text);
+  line-height: 1.5;
 }
 
-/* Full-Screen Admin Workspace View */
+/* ============================================================
+   FULL-SCREEN ADMIN WORKSPACE (Desktop focused — no mobile media)
+   ============================================================ */
 .admin-fullscreen-container {
   position: fixed;
   top: 0;
@@ -450,7 +590,7 @@ header {
 /* Executive Dashboard Stats Grid */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 18px;
   margin-bottom: 24px;
 }
@@ -475,6 +615,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .stat-info h3 {
@@ -534,22 +675,26 @@ header {
 /* Admin Tabs */
 .tab-nav {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--border-color);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.tab-nav::-webkit-scrollbar { display: none; }
 
 .tab-btn {
   background: none;
   border: none;
   color: var(--text-muted);
-  padding: 10px 16px;
-  font-size: 0.95rem;
+  padding: 10px 14px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   border-bottom: 3px solid transparent;
   white-space: nowrap;
+  font-family: var(--font-main);
 }
 
 .tab-btn.active {
@@ -557,13 +702,8 @@ header {
   border-bottom-color: var(--tab-active);
 }
 
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
-}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
 /* Filter Row */
 .filter-row {
@@ -581,9 +721,10 @@ header {
 }
 
 .admin-table th, .admin-table td {
-  padding: 12px;
+  padding: 11px 12px;
   border-bottom: 1px solid var(--border-color);
   text-align: left;
+  white-space: nowrap;
 }
 
 .admin-table th {
@@ -591,30 +732,35 @@ header {
   color: white;
 }
 
-/* Toast System */
+/* ============================================================
+   TOAST NOTIFICATIONS
+   ============================================================ */
 .toast-container {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  right: 12px;
+  left: 12px;
   z-index: 2000;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  pointer-events: none;
 }
 
 .toast {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-left: 4px solid var(--haier-blue);
-  padding: 14px 20px;
+  padding: 12px 16px;
   border-radius: var(--radius-md);
   color: var(--text-main);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   box-shadow: var(--shadow);
   display: flex;
   align-items: center;
   gap: 10px;
   animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: auto;
 }
 
 .toast.toast-success { border-left-color: var(--accent); }
@@ -622,11 +768,13 @@ header {
 .toast.toast-warning { border-left-color: var(--warning); }
 
 @keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
-/* Loading Overlay */
+/* ============================================================
+   LOADING OVERLAY
+   ============================================================ */
 .spinner-overlay {
   position: fixed;
   top: 0;
@@ -660,26 +808,72 @@ header {
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* Footer */
+/* ============================================================
+   FOOTER
+   ============================================================ */
 footer {
   text-align: center;
-  padding: 20px;
-  font-size: 0.82rem;
+  padding: 18px;
+  font-size: 0.8rem;
   color: var(--text-muted);
-  margin-top: 20px;
+  margin-top: 16px;
   border-top: 1px solid var(--border-color);
 }
 
-/* Responsive adjustments */
-@media (max-width: 600px) {
-  .header-title p { font-size: 0.7rem; }
-  .header-logo { height: 38px; width: 50px; }
+/* ============================================================
+   RESPONSIVE — MOBILE PHONES (≤ 640px)
+   Survey page only; admin stays desktop-focused.
+   ============================================================ */
+@media (max-width: 640px) {
+  /* Header collapses to compact bar */
+  header { padding: 8px 12px; gap: 8px; }
+  .header-logo { height: 36px; width: 48px; }
+  .header-title h1 { font-size: 0.82rem; }
+  .header-title p { display: none; } /* hide subtitle on mobile */
+  .header-actions { gap: 6px; }
+  .header-actions .btn { padding: 7px 10px; font-size: 0.75rem; gap: 4px; }
+
+  /* Cards tighter padding */
+  .card { padding: 14px; border-radius: var(--radius-md); }
+  .card-title { font-size: 0.95rem; margin-bottom: 14px; }
+
+  /* Container full-width */
+  .container { padding: 10px; }
+
+  /* User info: stack on mobile */
+  .user-info-grid { grid-template-columns: 1fr; }
+
+  /* Store badge: stack info + button vertically */
+  .store-badge { flex-direction: column; align-items: stretch; }
+  .store-badge-info h2 { font-size: 0.95rem; }
+  .store-badge .btn { width: 100%; justify-content: center; }
+
+  /* ---- Survey Matrix: HIDE desktop table, SHOW brand cards ---- */
+  .table-wrapper.survey-matrix-wrapper { display: none; }
+  .brand-cards-container { display: flex; }
+  .mobile-survey-hint { display: block; }
+  .mobile-grand-total { display: block; }
+
+  /* Make action buttons full-width stacked */
+  .survey-actions { flex-direction: column; }
+  .survey-actions .btn { flex: unset; width: 100%; }
+
+  /* Toast: full-width at bottom */
+  .toast-container { right: 8px; left: 8px; }
+  .toast { font-size: 0.82rem; padding: 10px 12px; }
+
+  /* Footer */
+  footer { font-size: 0.75rem; padding: 14px; }
+}
+
+/* ============================================================
+   TABLET (641px – 900px): slightly responsive
+   ============================================================ */
+@media (min-width: 641px) and (max-width: 900px) {
+  .header-title h1 { font-size: 0.92rem; }
+  .header-title p { font-size: 0.68rem; }
   .card { padding: 18px; }
-  .btn { padding: 10px 14px; font-size: 0.85rem; }
-  .cell-input { width: 65px; padding: 6px; font-size: 0.9rem; }
-  .charts-grid { grid-template-columns: 1fr; }
+  .user-info-grid { grid-template-columns: 1fr 1fr; }
 }

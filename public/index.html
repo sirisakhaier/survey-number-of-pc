@@ -62,7 +62,7 @@
         </select>
       </div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+      <div class="user-info-grid">
         <div class="form-group">
           <label for="inputUserName">4. ชื่อผู้กรอกข้อมูล (User Name) <span style="color:var(--danger)">*</span></label>
           <input type="text" id="inputUserName" class="form-input" placeholder="ระบุชื่อผู้กรอกข้อมูล">
@@ -106,7 +106,8 @@
         * กรอกจำนวนตัวเลขเต็ม (0 หรือมากกว่า) ในแต่ละช่องตามประเภทพนักงาน PC ของแต่ละแบรนด์ (ระบบจะไม่บันทึกช่องที่มีค่าเป็น 0 เพื่อประหยัดพื้นที่)
       </p>
 
-      <div class="table-wrapper">
+      <!-- Desktop/Tablet: classic horizontal scroll table -->
+      <div class="table-wrapper survey-matrix-wrapper">
         <table class="matrix-table" id="tableSurveyMatrix">
           <thead>
             <tr id="matrixHeaderRow">
@@ -121,7 +122,12 @@
         </table>
       </div>
 
-      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <!-- Mobile: brand-per-card layout (shown only on small screens via CSS) -->
+      <p class="mobile-survey-hint">📱 กรอกตัวเลขในแต่ละช่อง (0 หรือมากกว่า) ระบบจะคำนวณยอดรวมให้อัตโนมัติ</p>
+      <div class="brand-cards-container" id="brandCardsContainer"></div>
+      <div class="mobile-grand-total" id="mobileGrandTotal">จำนวน PC รวมทั้งหมด: <span id="mobileGrandTotalValue">0</span> คน</div>
+
+      <div class="survey-actions" style="display: flex; gap: 12px; flex-wrap: wrap;">
         <button id="btnSaveSurvey" class="btn btn-accent btn-large" style="flex: 2;">
           💾 บันทึกข้อมูลสำรวจ (Save Survey)
         </button>

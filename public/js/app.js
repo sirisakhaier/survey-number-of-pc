@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const matrixFooter = document.getElementById("matrixFooter");
   const btnSaveSurvey = document.getElementById("btnSaveSurvey");
   const btnClearMatrix = document.getElementById("btnClearMatrix");
+  const brandCardsContainer = document.getElementById("brandCardsContainer");
+  const mobileGrandTotalValue = document.getElementById("mobileGrandTotalValue");
 
   // Admin Fullscreen Workspace Elements
   const btnAdminTrigger = document.getElementById("btnAdminTrigger");
@@ -256,12 +258,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (Array.isArray(data.details)) {
           data.details.forEach((d) => {
-            const input = document.querySelector(
-              `input[data-brand-id="${d.brand_id}"][data-choice-id="${d.answer_choice_id}"]`
+            // Fill desktop table input
+            const tableInput = document.querySelector(
+              `input[data-brand-id="${d.brand_id}"][data-choice-id="${d.answer_choice_id}"][data-source="table"]`
             );
-            if (input) {
-              input.value = d.value.toString();
-            }
+            if (tableInput) tableInput.value = d.value.toString();
+
+            // Fill mobile card input
+            const cardInput = document.querySelector(
+              `input[data-brand-id="${d.brand_id}"][data-choice-id="${d.answer_choice_id}"][data-source="card"]`
+            );
+            if (cardInput) cardInput.value = d.value.toString();
           });
           calculateMatrixTotals();
         }
@@ -297,6 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Matrix Grid Render & Calculation ---
   function renderMatrixGrid() {
+    // === Desktop Table ===
     matrixHeaderRow.innerHTML = "<th>แบรนด์ (Brand)</th>";
     allAnswerChoices.forEach((choice) => {
       const th = document.createElement("th");
@@ -325,11 +333,17 @@ document.addEventListener("DOMContentLoaded", () => {
         input.className = "cell-input";
         input.dataset.brandId = brand.id.toString();
         input.dataset.choiceId = choice.id.toString();
+        input.dataset.source = "table";
 
         input.addEventListener("input", () => {
           if (parseInt(input.value) < 0 || isNaN(parseInt(input.value))) {
             input.value = "0";
           }
+          // Sync to mobile card input
+          const mobileInput = document.querySelector(
+            `input[data-brand-id="${brand.id}"][data-choice-id="${choice.id}"][data-source="card"]`
+          );
+          if (mobileInput) mobileInput.value = input.value;
           calculateMatrixTotals();
         });
 
@@ -366,8 +380,76 @@ document.addEventListener("DOMContentLoaded", () => {
     tdGrandTotal.id = "lblGrandTotal";
     tdGrandTotal.textContent = "0";
     trFoot.appendChild(tdGrandTotal);
-
     matrixFooter.appendChild(trFoot);
+
+    // === Mobile Brand Cards ===
+    if (brandCardsContainer) {
+      brandCardsContainer.innerHTML = "";
+      allBrands.forEach((brand) => {
+        const card = document.createElement("div");
+        card.className = "brand-card";
+
+        const header = document.createElement("div");
+        header.className = "brand-card-header";
+
+        const nameEl = document.createElement("span");
+        nameEl.className = "brand-card-name";
+        nameEl.textContent = brand.name;
+
+        const totalEl = document.createElement("span");
+        totalEl.className = "brand-card-total";
+        totalEl.id = `mobileTotal_brand_${brand.id}`;
+        totalEl.textContent = "รวม: 0";
+
+        header.appendChild(nameEl);
+        header.appendChild(totalEl);
+        card.appendChild(header);
+
+        const inputsGrid = document.createElement("div");
+        inputsGrid.className = "brand-card-inputs";
+
+        allAnswerChoices.forEach((choice) => {
+          const group = document.createElement("div");
+          group.className = "brand-card-input-group";
+
+          const lbl = document.createElement("label");
+          lbl.textContent = choice.name;
+          lbl.setAttribute("for", `card_${brand.id}_${choice.id}`);
+
+          const inp = document.createElement("input");
+          inp.type = "number";
+          inp.id = `card_${brand.id}_${choice.id}`;
+          inp.min = "0";
+          inp.step = "1";
+          inp.value = "0";
+          inp.className = "cell-input";
+          inp.dataset.brandId = brand.id.toString();
+          inp.dataset.choiceId = choice.id.toString();
+          inp.dataset.source = "card";
+          inp.inputMode = "numeric";
+          inp.pattern = "[0-9]*";
+
+          inp.addEventListener("input", () => {
+            if (parseInt(inp.value) < 0 || isNaN(parseInt(inp.value))) {
+              inp.value = "0";
+            }
+            // Sync to desktop table input
+            const tableInput = document.querySelector(
+              `input[data-brand-id="${brand.id}"][data-choice-id="${choice.id}"][data-source="table"]`
+            );
+            if (tableInput) tableInput.value = inp.value;
+            calculateMatrixTotals();
+          });
+
+          group.appendChild(lbl);
+          group.appendChild(inp);
+          inputsGrid.appendChild(group);
+        });
+
+        card.appendChild(inputsGrid);
+        brandCardsContainer.appendChild(card);
+      });
+    }
 
     calculateMatrixTotals();
   }
@@ -376,38 +458,55 @@ document.addEventListener("DOMContentLoaded", () => {
     let grandTotal = 0;
 
     allBrands.forEach((brand) => {
+      // Use table inputs as source-of-truth for the row sum
       let rowSum = 0;
-      const inputs = document.querySelectorAll(
-        `input[data-brand-id="${brand.id}"]`
+      const tableInputs = document.querySelectorAll(
+        `input[data-brand-id="${brand.id}"][data-source="table"]`
       );
-      inputs.forEach((input) => {
+      // Fallback if no data-source attribute (older code)
+      const allInputs = tableInputs.length > 0
+        ? tableInputs
+        : document.querySelectorAll(`input[data-brand-id="${brand.id}"]`);
+
+      allInputs.forEach((input) => {
         const val = parseInt(input.value, 10) || 0;
         rowSum += val;
       });
-      const lblRowTotal = document.querySelector(
-        `td[data-brand-total-id="${brand.id}"]`
-      );
+
+      // Update desktop row total cell
+      const lblRowTotal = document.querySelector(`td[data-brand-total-id="${brand.id}"]`);
       if (lblRowTotal) lblRowTotal.textContent = rowSum.toString();
+
+      // Update mobile brand card total badge
+      const mobileTotalEl = document.getElementById(`mobileTotal_brand_${brand.id}`);
+      if (mobileTotalEl) mobileTotalEl.textContent = `รวม: ${rowSum}`;
     });
 
     allAnswerChoices.forEach((choice) => {
       let colSum = 0;
-      const inputs = document.querySelectorAll(
-        `input[data-choice-id="${choice.id}"]`
+      const tableInputs = document.querySelectorAll(
+        `input[data-choice-id="${choice.id}"][data-source="table"]`
       );
-      inputs.forEach((input) => {
+      const allInputs = tableInputs.length > 0
+        ? tableInputs
+        : document.querySelectorAll(`input[data-choice-id="${choice.id}"]`);
+
+      allInputs.forEach((input) => {
         const val = parseInt(input.value, 10) || 0;
         colSum += val;
       });
-      const lblColTotal = document.querySelector(
-        `td[data-choice-total-id="${choice.id}"]`
-      );
+
+      const lblColTotal = document.querySelector(`td[data-choice-total-id="${choice.id}"]`);
       if (lblColTotal) lblColTotal.textContent = colSum.toString();
       grandTotal += colSum;
     });
 
+    // Update desktop grand total
     const lblGrandTotal = document.getElementById("lblGrandTotal");
     if (lblGrandTotal) lblGrandTotal.textContent = grandTotal.toString();
+
+    // Update mobile grand total bar
+    if (mobileGrandTotalValue) mobileGrandTotalValue.textContent = grandTotal.toString();
   }
 
   btnClearMatrix.addEventListener("click", () => {
