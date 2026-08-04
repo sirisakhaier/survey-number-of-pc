@@ -157,7 +157,7 @@
       <div class="admin-topbar-brand">
         <img src="images/haier-logo.svg" alt="Haier Logo" class="header-logo">
         <div>
-          <h2>🛠️ ระบบจัดการผู้ดูแลระบบ (Admin Workspace)</h2>
+          <h2 id="lblAdminWorkspaceTitle">🛠️ ระบบจัดการผู้ดูแลระบบ (Admin Workspace)</h2>
           <p>Haier Electrical Appliances (Thailand) Co., Ltd.</p>
         </div>
       </div>
@@ -166,24 +166,28 @@
           🌙 Dark
         </button>
         <button id="btnAdminLogout" class="btn btn-secondary">
-          🚪 ออกจากระบบ Admin
+          🚪 ออกจากระบบ
         </button>
       </div>
     </div>
 
     <div class="admin-workspace-body">
       
-      <!-- Admin Sign-in Screen (No default password hint) -->
+      <!-- Admin / Viewer Sign-in Screen -->
       <div id="adminAuthSection" class="card" style="max-width: 420px; margin: 40px auto;">
         <div class="card-title">
-          <span>🔒 ยืนยันสิทธิ์ผู้ดูแลระบบ</span>
+          <span>🔒 เข้าสู่ระบบผู้ดูแล / ดูข้อมูล (Sign In)</span>
         </div>
         <p style="margin-bottom: 16px; color: var(--text-muted); font-size: 0.9rem;">
-          กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบผู้ดูแลระบบ (Admin Panel)
+          กรุณากรอกชื่อผู้ใช้และรหัสผ่านเพื่อเข้าสู่ระบบ (Admin / Viewer)
         </p>
         <div class="form-group">
+          <label for="inputAdminUsername">ชื่อผู้ใช้งาน (Username)</label>
+          <input type="text" id="inputAdminUsername" class="form-input" placeholder="admin หรือ viewer" autocomplete="off" value="admin">
+        </div>
+        <div class="form-group">
           <label for="inputAdminPassword">รหัสผ่าน (Password)</label>
-          <input type="password" id="inputAdminPassword" class="form-input" placeholder="กรอกรหัสผ่าน Admin">
+          <input type="password" id="inputAdminPassword" class="form-input" placeholder="กรอกรหัสผ่าน">
         </div>
         <button id="btnAdminLogin" class="btn btn-primary btn-large">เข้าสู่ระบบ (Login)</button>
       </div>

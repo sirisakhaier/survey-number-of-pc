@@ -33,8 +33,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnAdminLogout = document.getElementById("btnAdminLogout");
   const adminAuthSection = document.getElementById("adminAuthSection");
   const adminDashboardSection = document.getElementById("adminDashboardSection");
+  const inputAdminUsername = document.getElementById("inputAdminUsername");
   const inputAdminPassword = document.getElementById("inputAdminPassword");
   const btnAdminLogin = document.getElementById("btnAdminLogin");
+  const lblAdminWorkspaceTitle = document.getElementById("lblAdminWorkspaceTitle");
 
   // Executive Dashboard Elements
   const statTotalSurveys = document.getElementById("statTotalSurveys");
@@ -80,6 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let allAdminBrands = [];
   let allAdminAnswerChoices = [];
   let currentSelectedStore = null;
+  let currentAuthRole = "admin";
+  let currentAuthToken = "admin-authenticated-token";
 
   // --- Theme Toggle Logic ---
   let currentTheme = localStorage.getItem("haier-survey-theme") || "light";
@@ -610,6 +614,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Role Permissions Helper
+  function applyRolePermissions(role) {
+    const isViewer = role === "viewer";
+
+    if (lblAdminWorkspaceTitle) {
+      lblAdminWorkspaceTitle.textContent = isViewer
+        ? "👁️ ระบบดูข้อมูลผู้บริหาร (Viewer Workspace - อ่านอย่างเดียว)"
+        : "🛠️ ระบบจัดการผู้ดูแลระบบ (Admin Workspace)";
+    }
+
+    const tabManageBtn = document.querySelector('.tab-btn[data-tab="tabManageDimensions"]');
+    const tabImportBtn = document.querySelector('.tab-btn[data-tab="tabDimensions"]');
+    if (tabManageBtn) tabManageBtn.style.display = isViewer ? "none" : "";
+    if (tabImportBtn) tabImportBtn.style.display = isViewer ? "none" : "";
+
+    if (btnAdminClearSurveys) btnAdminClearSurveys.style.display = isViewer ? "none" : "";
+  }
+
   // --- Full-Screen Admin Workspace Actions ---
   btnAdminTrigger.addEventListener("click", () => {
     viewAdmin.style.display = "flex";
@@ -619,35 +641,48 @@ document.addEventListener("DOMContentLoaded", () => {
     viewAdmin.style.display = "none";
     adminDashboardSection.style.display = "none";
     adminAuthSection.style.display = "block";
-    inputAdminPassword.value = "";
+    if (inputAdminUsername) inputAdminUsername.value = "admin";
+    if (inputAdminPassword) inputAdminPassword.value = "";
+    currentAuthRole = "admin";
+    currentAuthToken = "admin-authenticated-token";
+    applyRolePermissions("admin");
   });
 
   btnAdminLogin.addEventListener("click", async () => {
-    const pass = inputAdminPassword.value;
-    if (!pass) return;
+    const username = inputAdminUsername ? inputAdminUsername.value.trim() : "";
+    const pass = inputAdminPassword.value.trim();
+    if (!pass) {
+      showToast("กรุณากรอกรหัสผ่าน", "warning");
+      return;
+    }
 
     showSpinner(true);
     try {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: pass }),
+        body: JSON.stringify({ username, password: pass }),
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
+        currentAuthRole = data.role || "admin";
+        currentAuthToken = data.token || "admin-authenticated-token";
+        applyRolePermissions(currentAuthRole);
+
         adminAuthSection.style.display = "none";
         adminDashboardSection.style.display = "block";
-        showToast("เข้าสู่ระบบ Admin สำเร็จ", "success");
-        
-        // Ensure default active tab is Executive Dashboard (tabExecutiveStats)
+        showToast(`เข้าสู่ระบบในสิทธิ์ ${currentAuthRole === "viewer" ? "Viewer (อ่านอย่างเดียว)" : "Admin"} สำเร็จ`, "success");
+
         activateTab("tabExecutiveStats");
 
         loadExecutiveDashboardStats();
         loadAdminSurveys();
-        loadAdminDimensions();
+        if (currentAuthRole !== "viewer") {
+          loadAdminDimensions();
+        }
       } else {
-        showToast("รหัสผ่านไม่ถูกต้อง", "error");
+        showToast(data.error || "ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง", "error");
       }
     } catch (err) {
       showToast("เกิดข้อผิดพลาด: " + err.message, "error");
@@ -921,6 +956,12 @@ document.addEventListener("DOMContentLoaded", () => {
           ? new Date(row.last_update).toLocaleString("th-TH")
           : "-";
 
+        const deleteCellContent = currentAuthRole === "viewer"
+          ? `<span style="color:var(--text-muted); font-size: 0.78rem;">🔒 อ่านอย่างเดียว</span>`
+          : `<button class="btn btn-danger btn-delete-survey" data-survey-id="${row.survey_id}" style="padding: 4px 8px; font-size: 0.75rem;">
+               🗑️ ลบ
+             </button>`;
+
         tr.innerHTML = `
           <td>${row.survey_id || "-"}</td>
           <td style="font-weight:600; color:var(--primary);">${row.store_code || "-"}</td>
@@ -933,11 +974,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <td>${lastUpdateStr}</td>
           <td style="font-weight: bold; color: var(--primary); text-align: center;">${row.total_pc ?? 0} คน</td>
           <td style="font-size: 0.8rem; color: var(--text-main);">${row.summary || '<span style="color:var(--text-muted)">ไม่มีพนักงาน PC</span>'}</td>
-          <td>
-            <button class="btn btn-danger btn-delete-survey" data-survey-id="${row.survey_id}" style="padding: 4px 8px; font-size: 0.75rem;">
-              🗑️ ลบ
-            </button>
-          </td>
+          <td>${deleteCellContent}</td>
         `;
         tblAdminSurveysBody.appendChild(tr);
       });
@@ -949,7 +986,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
           showSpinner(true);
           try {
-            const delRes = await fetch(`/api/admin/survey/${sId}`, { method: "DELETE" });
+            const delRes = await fetch(`/api/admin/survey/${sId}`, {
+              method: "DELETE",
+              headers: { "Authorization": `Bearer ${currentAuthToken}` }
+            });
             const delData = await delRes.json();
             if (delRes.ok && delData.success) {
               showToast("ลบข้อมูลแบบสำรวจเรียบร้อย", "success");
@@ -1048,7 +1088,10 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           const res = await fetch("/api/admin/dimension/toggle", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${currentAuthToken}`
+            },
             body: JSON.stringify({ dimension: dim, id, isActive: newActive }),
           });
 
@@ -1080,7 +1123,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     showSpinner(true);
     try {
-      const res = await fetch("/api/admin/clear", { method: "DELETE" });
+      const res = await fetch("/api/admin/clear", {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${currentAuthToken}` }
+      });
       const data = await res.json();
       if (res.ok && data.success) {
         showToast("ล้างข้อมูลแบบสำรวจทั้งหมดในระบบเรียบร้อย", "success");
@@ -1113,7 +1159,10 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const res = await fetch(apiEndpoint, {
           method: "POST",
-          headers: { "Content-Type": "text/csv; charset=utf-8" },
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Authorization": `Bearer ${currentAuthToken}`
+          },
           body: text,
         });
         const data = await res.json();
@@ -1154,7 +1203,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     showSpinner(true);
     try {
-      const res = await fetch("/api/admin/reset-dimensions", { method: "POST" });
+      const res = await fetch("/api/admin/reset-dimensions", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${currentAuthToken}` }
+      });
       const data = await res.json();
       if (res.ok && data.success) {
         showToast("รีเซ็ตมิติข้อมูลทั้งหมดสำเร็จ", "success");

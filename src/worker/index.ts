@@ -1,9 +1,16 @@
 export interface Env {
   DB: D1Database;
   ADMIN_PASSWORD?: string;
+  VIEWER_PASSWORD?: string;
 }
 
 const DEFAULT_ADMIN_PASS = "admin1234";
+const DEFAULT_VIEWER_PASS = "viewer1234";
+
+function isViewerRequest(request: Request): boolean {
+  const auth = request.headers.get("Authorization");
+  return auth === "Bearer viewer-authenticated-token";
+}
 
 function jsonResponse(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -184,10 +191,17 @@ export default {
       if (method === "POST" && path === "/api/admin/login") {
         const body: any = await request.json();
         const adminPass = env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASS;
-        if (body.password === adminPass) {
-          return jsonResponse({ success: true, token: "admin-authenticated-token" });
+        const viewerPass = env.VIEWER_PASSWORD || DEFAULT_VIEWER_PASS;
+
+        const username = (body.username || "").trim().toLowerCase();
+        const password = (body.password || "").trim();
+
+        if (password === adminPass || (username === "admin" && password === adminPass)) {
+          return jsonResponse({ success: true, role: "admin", user: "admin", token: "admin-authenticated-token" });
+        } else if (password === viewerPass || (username === "viewer" && password === viewerPass)) {
+          return jsonResponse({ success: true, role: "viewer", user: "viewer", token: "viewer-authenticated-token" });
         } else {
-          return jsonResponse({ success: false, error: "Incorrect password" }, 401);
+          return jsonResponse({ success: false, error: "ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง" }, 401);
         }
       }
 
@@ -307,6 +321,9 @@ export default {
 
       // 7. POST /api/admin/dimension/toggle
       if (method === "POST" && path === "/api/admin/dimension/toggle") {
+        if (isViewerRequest(request)) {
+          return jsonResponse({ error: "สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถแก้ไขได้" }, 403);
+        }
         const body: any = await request.json();
         const { dimension, id, isActive } = body;
 
@@ -332,6 +349,9 @@ export default {
 
       // 8. POST /api/admin/import/stores - Support 6-column CSV: ชื่อสาขา,ห้าง,จังหวัด,ภูมิภาค,STORE_ID,STORE_NAME
       if (method === "POST" && path === "/api/admin/import/stores") {
+        if (isViewerRequest(request)) {
+          return jsonResponse({ error: "สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถนำเข้าข้อมูลได้" }, 403);
+        }
         const csvText = await request.text();
         const lines = csvText.split(/\r?\n/).filter((l) => l.trim().length > 0);
         if (lines.length <= 1) {
@@ -362,6 +382,9 @@ export default {
 
       // 9. POST /api/admin/import/brands
       if (method === "POST" && path === "/api/admin/import/brands") {
+        if (isViewerRequest(request)) {
+          return jsonResponse({ error: "สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถนำเข้าข้อมูลได้" }, 403);
+        }
         const csvText = await request.text();
         const lines = csvText.split(/\r?\n/).filter((l) => l.trim().length > 0);
         let imported = 0;
@@ -388,6 +411,9 @@ export default {
 
       // 10. POST /api/admin/import/answers
       if (method === "POST" && path === "/api/admin/import/answers") {
+        if (isViewerRequest(request)) {
+          return jsonResponse({ error: "สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถนำเข้าข้อมูลได้" }, 403);
+        }
         const csvText = await request.text();
         const lines = csvText.split(/\r?\n/).filter((l) => l.trim().length > 0);
         let imported = 0;
@@ -414,6 +440,9 @@ export default {
 
       // 11. POST /api/admin/reset-dimensions
       if (method === "POST" && path === "/api/admin/reset-dimensions") {
+        if (isViewerRequest(request)) {
+          return jsonResponse({ error: "สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถรีเซ็ตข้อมูลได้" }, 403);
+        }
         await env.DB.batch([
           env.DB.prepare("DELETE FROM survey_detail"),
           env.DB.prepare("DELETE FROM survey_header"),
@@ -538,6 +567,9 @@ export default {
 
       // 14. DELETE /api/admin/survey/:surveyId
       if (method === "DELETE" && path.startsWith("/api/admin/survey/")) {
+        if (isViewerRequest(request)) {
+          return jsonResponse({ error: "สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถลบข้อมูลได้" }, 403);
+        }
         const surveyIdStr = path.replace("/api/admin/survey/", "");
         const surveyId = parseInt(surveyIdStr, 10);
         if (isNaN(surveyId)) {
@@ -552,6 +584,9 @@ export default {
 
       // 15. DELETE /api/admin/clear
       if (method === "DELETE" && path === "/api/admin/clear") {
+        if (isViewerRequest(request)) {
+          return jsonResponse({ error: "สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถลบข้อมูลได้" }, 403);
+        }
         await env.DB.batch([
           env.DB.prepare("DELETE FROM survey_detail"),
           env.DB.prepare("DELETE FROM survey_header"),
