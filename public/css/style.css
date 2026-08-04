@@ -713,10 +713,9 @@ header {
   margin-bottom: 16px;
 }
 
-/* Admin Table Wrapper (Screen Viewport Constrained with H & V Scroll) */
+/* Admin Table Wrapper (Shows ~12 rows with vertical and horizontal scroll) */
 .admin-table-wrapper {
-  max-height: calc(100vh - 280px);
-  min-height: 250px;
+  max-height: 540px;
   overflow: auto;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
