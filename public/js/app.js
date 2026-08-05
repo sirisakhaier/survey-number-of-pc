@@ -1,5 +1,7 @@
-// Client Application Logic for Survey Application (Full-Screen Admin Workspace & Executive Dashboard)
 document.addEventListener("DOMContentLoaded", () => {
+  // Start initial data loading immediately
+  setTimeout(() => loadDimensions(), 0);
+
   // --- DOM Elements ---
   const btnThemeToggle = document.getElementById("btnThemeToggle");
   const btnAdminThemeToggle = document.getElementById("btnAdminThemeToggle");
@@ -153,16 +155,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Cascading Dropdown Logic (Order: 1. ห้าง -> 2. ภูมิภาค -> 3. สาขา) ---
   function populateMallDropdown() {
+    if (!selectMall) return;
     selectMall.innerHTML = '<option value="">-- กรุณาเลือกห้าง/ช่องทาง --</option>';
-    selectRegion.innerHTML = '<option value="">-- กรุณาเลือกภูมิภาค --</option>';
-    selectStore.innerHTML = '<option value="">-- กรุณาเลือกสาขา --</option>';
-    selectRegion.disabled = true;
-    selectStore.disabled = true;
-    btnStartSurvey.disabled = true;
+    if (selectRegion) {
+      selectRegion.innerHTML = '<option value="">-- กรุณาเลือกภูมิภาค --</option>';
+      selectRegion.disabled = true;
+    }
+    if (selectStore) {
+      selectStore.innerHTML = '<option value="">-- กรุณาเลือกสาขา --</option>';
+      selectStore.disabled = true;
+    }
+    if (btnStartSurvey) btnStartSurvey.disabled = true;
 
-    const malls = Array.from(new Set(allStores.map((s) => s.mall))).sort();
+    if (!allStores || allStores.length === 0) return;
+
+    const malls = Array.from(new Set(allStores.map((s) => s.mall).filter((m) => m && m.trim() !== ""))).sort();
     malls.forEach((m) => {
       const opt = document.createElement("option");
       opt.value = m;
@@ -1226,7 +1234,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Start App ---
   // Force-clear user fields on every page load (prevents browser autocomplete restoring values)
-  inputUserName.value = "";
-  inputUserPhone.value = "";
+  if (inputUserName) inputUserName.value = "";
+  if (inputUserPhone) inputUserPhone.value = "";
   loadDimensions();
 });

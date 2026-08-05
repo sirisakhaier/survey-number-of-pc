@@ -20,6 +20,7 @@ function jsonResponse(data: any, status = 200) {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
     },
   });
 }
