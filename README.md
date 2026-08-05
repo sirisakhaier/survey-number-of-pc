@@ -1,23 +1,56 @@
-# Survey Number of PC Web Application
+# 📊 Survey Number of PC Web Application
+> **Haier Electrical Appliances (Thailand) Co., Ltd.**  
+> ระบบเว็บแอปพลิเคชันสำรวจและบันทึกจำนวนพนักงาน PC (Product Consultant) ตามสาขา ห้างสรรพสินค้า แบรนด์สินค้า และประเภทการจ้างงาน
 
-ระบบเว็บแอปพลิเคชันสำรวจและบันทึกจำนวนพนักงาน PC (Product Consultant) ตามสาขา ห้างสรรพสินค้า แบรนด์สินค้า และประเภทการจ้างงาน โดยพัฒนาตามมาตรฐาน **GitHub + Cloudflare Workers API + Cloudflare D1 (SQLite) + Cloudflare Pages**.
+[![Live Demo](https://img.shields.io/badge/Live_App-Cloudflare_Workers-005AAA?style=for-the-badge&logo=cloudflare)](https://survey-app.sirisak-haier.workers.dev)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/sirisakhaier/survey-number-of-pc)
 
 ---
 
-## 🌟 คุณสมบัติระบบ (Features)
+## 🌟 คุณสมบัติเด่นของระบบ (Key Features)
 
-1. **การสำรวจข้อมูล (Multi-user Survey)**:
-   - **Cascading Dropdowns**: เลือกภูมิภาค ➔ เลือกห้าง/ช่องทาง ➔ เลือกสาขา
-   - **Auto-Load**: ดึงข้อมูลที่เคยบันทึกไว้สำหรับสาขานั้นมาแสดงเพื่อแก้ไขทันที
-   - **Cross-Tab Survey Matrix**: ตารางเปรียบเทียบระหว่าง **Brands** (12 แบรนด์) และ **Answer Choices** (5 ประเภท PC)
-   - **Auto Totals & Validation**: คำนวณผลรวมตามแถว (Row Total) ผลรวมตามคอลัมน์ (Column Total) และผลรวมทั้งหมด (Grand Total) แบบเรียลไทม์ พร้อมตรวจทานค่าตัวเลข (Integer >= 0)
+### 1. 📝 หน้าสำรวจข้อมูล (Survey Landing Page for Field Users)
+- **Cascading Dropdowns**: ลำดับการเลือก: `1. เลือกห้าง/ช่องทาง (Mall)` ➔ `2. เลือกภูมิภาค (Region)` ➔ `3. เลือกสาขา (Store Name)`
+- **Auto Data Pre-fill**: ดึงคำตอบที่เคยบันทึกไว้ของสาขานั้นมาแสดงในตารางโดยอัตโนมัติ เพื่อความสะดวกในการอัปเดตข้อมูล
+- **Matrix Layout (Desktop & Mobile Responsive)**: ตารางบันทึกจำนวน PC แบบพิกัดระหว่าง **12 แบรนด์** (Hisense, Samsung, LG, TCL, Toshiba, Mitsu Heavy, Mitsu Elec, Midea, Sanden, Daikin, Electrolux, Hitachi) และ **5 ประเภท PC** (MA PC, TV PC, AC PC, Promoter, Partime)
+- **Blank Input Handling**: เริ่มต้นด้วยช่องว่าง (BLANK) ไม่แสดงเลข 0 และช่องที่ไม่กรอกจะไม่ถูกบันทึกเข้าฐานข้อมูลเพื่อลดขนาดไฟล์
+- **Validation**: ตรวจสอบเบอร์โทรศัพท์มือถือ 10 หลัก (เริ่มต้นด้วย 0) และคำนวณยอดรวม (Row Total, Column Total, Grand Total) แบบเรียลไทม์
 
-2. **ระบบผู้ดูแลระบบ (Admin Panel)**:
-   - เข้าสู่ระบบด้วยรหัสผ่าน (`admin1234` เป็นค่าเริ่มต้น สามารถตั้งค่าผ่าน `ADMIN_PASSWORD` Environment Variable ได้)
-   - **เรียกดูผลการสำรวจ (Browse Results)** พร้อมระบบกรองข้อมูลตาม ภูมิภาค, สาขา, และ แบรนด์
-   - **ส่งออกข้อมูล CSV (Export CSV)** ดาวน์โหลดผลการสำรวจทั้งหมดในรูปแบบ UTF-8 CSV
-   - **นำเข้ามิติข้อมูล (Import CSV)** สำหรับ Stores, Brands, และ Answer Choices
-   - **ลบข้อมูลสำรวจ (Delete/Clear Survey)** และระบบ **Reset All Dimensions**
+### 2. 🔐 ระบบกำหนดสิทธิ์การใช้งาน (Role-Based Access Control)
+- **แผงเข้าสู่ระบบ (Sign-In Screen)**: รองรับการกดปุ่ม `ENTER` ในช่อง Username/Password เพื่อเข้าสู่ระบบทันที
+- **👑 Admin Role** (`admin` / default password: `admin1234`):
+  - สิทธิ์เต็มในการบริหารจัดการระบบ (แดชบอร์ดผู้บริหาร, ดูผลสำรวจ, ส่งออก CSV, นำเข้า CSV มิติข้อมูล, เปิด/ปิด มิติข้อมูล, ลบรายการสำรวจ, และรีเซ็ตข้อมูล)
+- **👁️ Viewer Role** (`viewer` / default password: `viewer1234`):
+  - สิทธิ์สำหรับผู้บริหารและผู้ตรวจสอบ (ดูแดชบอร์ดสรุปผู้บริหาร, ดูผลการสำรวจ, ดาวน์โหลด CSV)
+  - ซ่อนเมนูจัดการ active/inactive, ปุ่มนำเข้าข้อมูล, และปุ่มลบ/รีเซ็ตข้อมูลทั้งหมด
+
+### 3. 📈 แดชบอร์ดสรุปผู้บริหาร (Executive Dashboard)
+- **Main Selection Filter (ห้าง/ช่องทาง)**: กรองข้อมูลสถิติมุมมองระดับห้างสรรพสินค้า (เช่น บิ๊กซี, โลตัส, โฮมโปร, ไทยวัสดุ ฯลฯ)
+- **KPI Metrics Cards**: แสดงสถิติสำคัญ ได้แก่ จำนวนสาขาที่สำรวจแล้ว, Coverage Ratio %, จำนวน PC รวมทุกประเภท, จำนวนภูมิภาค และจำนวนแบรนด์ที่เปิดใช้งาน
+- **Interactive Visual Charts (Chart.js)**:
+  - กราฟวงกลมแสดงสัดส่วน PC แยกตามแบรนด์
+  - กราฟวงกลมแสดงสัดส่วน PC แยกตามประเภทคำตอบ
+  - กราฟแท่งเปรียบเทียบจำนวน PC รวม และจำนวนสาขาที่สำรวจแยกตามภูมิภาค
+
+### 4. 📋 รายงานผลการสำรวจ (Survey Results Table)
+- **Smart Filtering**: กรองผลสำรวจตาม ห้าง, ภูมิภาค, สาขา, และ แบรนด์
+- **Horizon Scroll & Fixed Height**: แสดงตารางรายงานแบบจำกัดความสูงสายตา (~12 แถว) พร้อมแถบเลื่อน Vertical Scroll และ Horizontal Scroll สำหรับดูข้อมูลแบรนด์ทั้งหมดได้ในหน้าจอเดียว
+- **Export CSV**: ดาวน์โหลดข้อมูลผลการสำรวจทั้งหมดเป็นไฟล์ UTF-8 CSV รองรับการเปิดใช้งานกับ Microsoft Excel
+- **Safety First**: ยกเลิกปุ่ม Clear All Data เพื่อป้องกันความผิดพลาดในการลบข้อมูลทั้งหมดโดยไม่ตั้งใจ
+
+### 5. ⚙️ การจัดการมิติข้อมูล Active / Inactive (Manage Dimensions)
+- **🏬 1. เปิด/ปิด ทั้งห้าง (Whole Customer / Mall)**: กดเปิด/ปิดใช้งานสถานะ Active/Inactive ให้กับทุกสาขาในห้างนั้นได้ด้วยการคลิกเพียงครั้งเดียว
+- **🏪 2. เปิด/ปิด สาขา ในห้างที่เลือก (Store in Select Mall)**: ตัวเลือกค้นหาตามห้างเพื่อดูและจัดการเปิด/ปิดการใช้งานสาขารายแห่ง
+- **🏷️ 3. แบรนด์ & 📋 4. ประเภท PC**: เปิด/ปิดการแสดงผลตัวเลือกแบรนด์และประเภท PC ในหน้าสำรวจ
+
+### 6. 📥 นำเข้าและรีเซ็ตมิติข้อมูล (Targeted Import CSV & Resets)
+- **Import CSV**: นำเข้าไฟล์ CSV มิติข้อมูล 3 หมวด (Stores, Brands, Answer Choices)
+- **Targeted Reset Controls**: แยกปุ่มรีเซ็ตออกเป็นส่วนๆ ชัดเจน:
+  - `🗑️ Reset Stores Data Only`: ลบเฉพาะมิติสาขา
+  - `🗑️ Reset Brands Data Only`: ลบเฉพาะมิติแบรนด์
+  - `🗑️ Reset Answer Choices Data Only`: ลบเฉพาะมิติตัวเลือกประเภท PC
+  - `📋 Reset Whole Survey Answer Data`: ล้างเฉพาะผลคำตอบการสำรวจทั้งหมด
+  - `🔥 Reset All Dimensions & Clear Database`: ล้างมิติข้อมูลและผลสำรวจทั้งหมดในระบบ D1
 
 ---
 
@@ -25,126 +58,81 @@
 
 ```
 Survey Number of PC/
-├── .github/
-│   └── workflows/
-│       └── deploy.yml          # GitHub Actions deployment pipeline
 ├── migrations/
-│   ├── 0001_schema.sql         # D1 Database Schema DDL
-│   └── 0002_seed.sql           # Seed data (1,058 Stores, 12 Brands, 5 Answer Choices)
+│   ├── 0001_schema.sql         # Database DDL Schema (Stores, Brands, Answer Choices, Headers, Details)
+│   └── 0002_seed.sql           # Seed Data (1,058 Stores, 12 Brands, 5 Answer Choices)
 ├── sample_data/
-│   ├── sample_stores.csv       # ตัวอย่างไฟล์ CSV มิติสาขา
-│   ├── sample_brands.csv       # ตัวอย่างไฟล์ CSV มิติแบรนด์
-│   └── sample_answers.csv      # ตัวอย่างไฟล์ CSV มิติตัวเลือกคำตอบ
+│   ├── sample_stores.csv       # ไฟล์ CSV ตัวอย่างสำหรับนำเข้ามิติสาขา
+│   ├── sample_brands.csv       # ไฟล์ CSV ตัวอย่างสำหรับนำเข้ามิติแบรนด์
+│   └── sample_answers.csv      # ไฟล์ CSV ตัวอย่างสำหรับนำเข้ามิติตัวเลือกคำตอบ
 ├── public/
-│   ├── index.html              # Frontend HTML Single Page App
+│   ├── index.html              # Single Page Application HTML Architecture
 │   ├── css/
-│   │   └── style.css           # Mobile-first Glassmorphism Design
+│   │   └── style.css           # Glassmorphism Modern Styling & Dark Mode CSS Variables
 │   └── js/
-│       └── app.js              # Client JavaScript (Cascading dropdown, matrix calculation, admin panel)
+│       └── app.js              # Client JS (Cascading Dropdowns, Matrix Calculations, Dashboard & Admin)
 ├── src/
-│   ├── client/
-│   │   └── index.ts            # Client TypeScript Source
 │   └── worker/
-│       └── index.ts            # Cloudflare Workers API & D1 Queries
-├── wrangler.toml               # Cloudflare Worker & D1 database configuration
-├── package.json                # Project dependencies and deployment scripts
-├── tsconfig.json               # TypeScript configuration
-└── README.md                   # คู่มือการใช้งานและการติดตั้ง
+│       └── index.ts            # Cloudflare Worker REST API & D1 SQLite Handler
+├── wrangler.toml               # Cloudflare Workers & D1 Binding Configuration
+├── package.json                # Dependencies & Build/Deploy Scripts
+└── README.md                   # เอกสารประกอบโครงการ
 ```
-
----
-
-## 🚀 ขั้นตอนการสร้าง Repository ใน GitHub & การใช้งาน
-
-### 1. นำโครงการขึ้น GitHub
-
-1. เปิด Terminal ในโฟลเดอร์โครงการนี้ แล้วเริ่มใช้งาน Git:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit: Survey Number of PC App with Cloudflare Workers & D1"
-   ```
-2. สร้าง Repository ใหม่ใน [GitHub](https://github.com/new) (เช่น ชื่อ `survey-number-of-pc`)
-3. เชื่อมต่อ Local Git กับ GitHub Remote และ Push โค้ด:
-   ```bash
-   git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/survey-number-of-pc.git
-   git branch -M main
-   git push -u origin main
-   ```
-
----
-
-## ☁️ ขั้นตอนการปรับใช้บน Cloudflare (Deployment Guide)
-
-### 1. สร้างฐานข้อมูล Cloudflare D1
-
-1. ติดตั้ง `wrangler` และล็อกอินเข้าสู่ Cloudflare:
-   ```bash
-   npx wrangler login
-   ```
-2. สร้างฐานข้อมูล D1 ชื่อ `survey_db`:
-   ```bash
-   npx wrangler d1 create survey_db
-   ```
-3. คัดลอก `database_id` ที่ได้ นำไปใส่ในไฟล์ `wrangler.toml`:
-   ```toml
-   [[d1_databases]]
-   binding = "DB"
-   database_name = "survey_db"
-   database_id = "ใส่-D1-DATABASE-ID-ของคุณที่นี่"
-   ```
-
-### 2. รัน Migration เพื่อสร้างตารางและลงข้อมูลเริ่มต้น (Seed Data)
-
-- **สำหรับ Local Development (ทดสอบในคอมพิวเตอร์)**:
-  ```bash
-  npm run d1:init:local
-  ```
-- **สำหรับ Production D1 บน Cloudflare**:
-  ```bash
-  npm run d1:init:remote
-  ```
-
----
-
-### 3. ตั้งค่า GitHub Actions สำหรับ Automatic Deployment
-
-ในระบบ GitHub Repository ไปที่ **Settings ➔ Secrets and variables ➔ Actions** แล้วเพิ่ม Secrets 2 ตัว:
-
-1. **`CLOUDFLARE_API_TOKEN`**: Cloudflare API Token ที่มีสิทธิ์แก้ไข Cloudflare Workers / D1 (สร้างได้จาก Cloudflare Dashboard ➔ Profile ➔ API Tokens ➔ Create Token ➔ Edit Cloudflare Workers template)
-2. **`CLOUDFLARE_ACCOUNT_ID`**: Account ID ของ Cloudflare (ดูได้จากแถบขวาของหน้า Cloudflare Overview)
-
-เมื่อมี Push โค้ดไปยังสาขา `main` โฟลว์ `.github/workflows/deploy.yml` จะทำการรัน D1 Migration และ Deploy Worker ไปยัง Cloudflare โดยอัตโนมัติ!
 
 ---
 
 ## 💻 การเปิดรันและทดสอบระบบแบบ Local (Local Development)
 
-รันคำสั่งพัฒนาในเครื่อง:
-```bash
-npm run dev
-```
-เปิดเบราว์เซอร์ไปที่ `http://localhost:8787` เพื่อทดสอบใช้งาน:
-- ทดลองเลือก ภูมิภาค ➔ ห้าง ➔ สาขา
-- ทดลองกรอกจำนวนตัวเลขพนักงาน PC แล้วกด **"บันทึกข้อมูลสำรวจ"**
-- ทดลองเปิดปุ่ม **⚙️ Admin** มุมขวาบน กรอกรหัสผ่าน `admin1234` เพื่อเข้าดูผลสำรวจและทดสอบดาวน์โหลด CSV
+1. ติดตั้ง Dependencies:
+   ```bash
+   npm install
+   ```
+2. รันคำสั่งพัฒนาเครื่องท้องถิ่น:
+   ```bash
+   npm run dev
+   ```
+3. เปิดเบราว์เซอร์ไปที่ `http://localhost:8787` เพื่อทดสอบระบบ
 
 ---
 
-## 🔌 รายการ API (API Endpoints)
+## 🚀 การปรับใช้บน Cloudflare (Deployment Guide)
 
-| HTTP Method | API Path | คำอธิบาย |
-| :--- | :--- | :--- |
-| `GET` | `/api/dimensions` | ดึงข้อมูลมิติสาขา แบรนด์ และประเภท PC |
-| `GET` | `/api/stores` | ดึงรายการสาขาทั้งหมด |
-| `GET` | `/api/survey/:storeId` | ดึงข้อมูลผลสำรวจเดิมตาม `storeId` |
-| `POST` | `/api/survey` | บันทึกหรืออัปเดตข้อมูลสำรวจของสาขา |
-| `POST` | `/api/admin/login` | ตรวจสอบรหัสผ่าน Admin Panel |
-| `GET` | `/api/admin/surveys` | ค้นหาผลสำรวจ (รองรับการกรองตามภูมิภาค สาขา แบรนด์) |
-| `GET` | `/api/admin/export` | ส่งออกผลสำรวจทั้งหมดเป็นไฟล์ CSV |
-| `DELETE` | `/api/admin/survey/:id` | ลบรายการสำรวจตาม ID |
-| `DELETE` | `/api/admin/clear` | ล้างผลสำรวจทั้งหมด |
-| `POST` | `/api/admin/import/stores` | นำเข้าไฟล์ CSV มิติสาขา |
-| `POST` | `/api/admin/import/brands` | นำเข้าไฟล์ CSV มิติแบรนด์ |
-| `POST` | `/api/admin/import/answers` | นำเข้าไฟล์ CSV มิติตัวเลือกคำตอบ |
-| `POST` | `/api/admin/reset-dimensions` | รีเซ็ตมิติข้อมูลทั้งหมด |
+### 1. สร้าง D1 Database & Deploy Worker
+```bash
+# ล็อกอินเข้าสู่ Cloudflare CLI
+npx wrangler login
+
+# สร้างฐานข้อมูล D1
+npx wrangler d1 create survey_db
+
+# รัน Migration ข้อมูลไปยัง Cloudflare D1 Remote
+npm run d1:init:remote
+
+# Build & Deploy ขึ้น Cloudflare Workers
+npm run deploy
+```
+
+---
+
+## 🔌 รายการ API (API Endpoints Summary)
+
+| Method | Endpoint Path | Role Permission | คำอธิบาย |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/dimensions` | Public | ดึงข้อมูลมิติที่ Active (`?includeInactive=true` สำหรับแอดมิน) |
+| `GET` | `/api/stores` | Public | ดึงรายการสาขาทั้งหมด |
+| `GET` | `/api/survey/:storeId` | Public | ดึงผลการสำรวจเดิมของสาขา |
+| `POST` | `/api/survey` | Public | บันทึกคำตอบแบบสำรวจของสาขา |
+| `POST` | `/api/admin/login` | Public | ตรวจสอบสิทธิ์การเข้าใช้งาน (`admin` / `viewer`) |
+| `GET` | `/api/admin/stats` | Admin / Viewer | ดึงข้อมูลสถิติแดชบอร์ดผู้บริหาร (รองรับ `?mall=...`) |
+| `GET` | `/api/admin/surveys` | Admin / Viewer | ค้นหาผลการสำรวจ (รองรับตัวกรอง Mall, Region, Store, Brand) |
+| `GET` | `/api/admin/export` | Admin / Viewer | ดาวน์โหลดรายงานผลการสำรวจเป็นไฟล์ CSV |
+| `DELETE`| `/api/admin/survey/:id` | Admin Only | ลบรายการผลการสำรวจรายแถว |
+| `POST` | `/api/admin/dimension/toggle` | Admin Only | สลับสถานะ Active/Inactive (`malls`, `stores`, `brands`, `answerChoices`) |
+| `POST` | `/api/admin/import/stores` | Admin Only | นำเข้าไฟล์ CSV มิติสาขา |
+| `POST` | `/api/admin/import/brands` | Admin Only | นำเข้าไฟล์ CSV มิติแบรนด์ |
+| `POST` | `/api/admin/import/answers`| Admin Only | นำเข้าไฟล์ CSV มิติตัวเลือกคำตอบ |
+| `POST` | `/api/admin/reset-dimensions`| Admin Only | รีเซ็ตข้อมูลเฉพาะส่วน (`stores`, `brands`, `answers`, `surveys`, `all`) |
+
+---
+
+© **Haier Electrical Appliances (Thailand) Co., Ltd.** All rights reserved.
