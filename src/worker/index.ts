@@ -326,7 +326,19 @@ export default {
           return jsonResponse({ error: "สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถแก้ไขได้" }, 403);
         }
         const body: any = await request.json();
-        const { dimension, id, isActive } = body;
+        const { dimension, id, mall, isActive } = body;
+
+        const activeVal = isActive ? 1 : 0;
+
+        if (dimension === "malls" || dimension === "mall") {
+          if (!mall) {
+            return jsonResponse({ error: "Missing mall parameter" }, 400);
+          }
+          await env.DB.prepare("UPDATE stores SET is_active = ? WHERE mall = ?")
+            .bind(activeVal, mall)
+            .run();
+          return jsonResponse({ success: true, dimension: "malls", mall, isActive: activeVal === 1 });
+        }
 
         const allowedTables: Record<string, string> = {
           stores: "stores",
@@ -340,7 +352,6 @@ export default {
           return jsonResponse({ error: "Invalid dimension table or ID" }, 400);
         }
 
-        const activeVal = isActive ? 1 : 0;
         await env.DB.prepare(`UPDATE ${table} SET is_active = ? WHERE id = ?`)
           .bind(activeVal, id)
           .run();
@@ -444,14 +455,40 @@ export default {
         if (isViewerRequest(request)) {
           return jsonResponse({ error: "สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถรีเซ็ตข้อมูลได้" }, 403);
         }
-        await env.DB.batch([
-          env.DB.prepare("DELETE FROM survey_detail"),
-          env.DB.prepare("DELETE FROM survey_header"),
-          env.DB.prepare("DELETE FROM stores"),
-          env.DB.prepare("DELETE FROM brands"),
-          env.DB.prepare("DELETE FROM answer_choices"),
-        ]);
-        return jsonResponse({ success: true, message: "All dimensions and surveys reset" });
+
+        let target = "all";
+        try {
+          const body: any = await request.json();
+          if (body && body.target) target = body.target;
+        } catch (e) {
+          // If body is empty or not JSON, default to "all"
+        }
+
+        if (target === "stores") {
+          await env.DB.prepare("DELETE FROM stores").run();
+          return jsonResponse({ success: true, message: "Reset stores dimension successful" });
+        } else if (target === "brands") {
+          await env.DB.prepare("DELETE FROM brands").run();
+          return jsonResponse({ success: true, message: "Reset brands dimension successful" });
+        } else if (target === "answers") {
+          await env.DB.prepare("DELETE FROM answer_choices").run();
+          return jsonResponse({ success: true, message: "Reset answer choices dimension successful" });
+        } else if (target === "surveys") {
+          await env.DB.batch([
+            env.DB.prepare("DELETE FROM survey_detail"),
+            env.DB.prepare("DELETE FROM survey_header"),
+          ]);
+          return jsonResponse({ success: true, message: "Reset all survey answer responses successful" });
+        } else {
+          await env.DB.batch([
+            env.DB.prepare("DELETE FROM survey_detail"),
+            env.DB.prepare("DELETE FROM survey_header"),
+            env.DB.prepare("DELETE FROM stores"),
+            env.DB.prepare("DELETE FROM brands"),
+            env.DB.prepare("DELETE FROM answer_choices"),
+          ]);
+          return jsonResponse({ success: true, message: "All dimensions and surveys reset" });
+        }
       }
 
       // 12. GET /api/admin/surveys (1 line per survey/user)

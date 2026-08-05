@@ -699,6 +699,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  if (inputAdminUsername) {
+    inputAdminUsername.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") btnAdminLogin.click();
+    });
+  }
+  if (inputAdminPassword) {
+    inputAdminPassword.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") btnAdminLogin.click();
+    });
+  }
+
   // Admin Tab Switching
   const tabBtns = document.querySelectorAll(".tab-btn");
   tabBtns.forEach((btn) => {
@@ -1020,6 +1031,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  const wrapperDimMallFilter = document.getElementById("wrapperDimMallFilter");
+  const selectDimMall = document.getElementById("selectDimMall");
+
+  function populateDimMallDropdown() {
+    if (!selectDimMall) return;
+    const currentVal = selectDimMall.value;
+    selectDimMall.innerHTML = '<option value="">-- กรุณาเลือกห้าง/ช่องทาง --</option>';
+    const storesSource = allAdminStores.length > 0 ? allAdminStores : allStores;
+    const malls = Array.from(new Set(storesSource.map((s) => s.mall).filter((m) => m && m.trim() !== ""))).sort();
+    malls.forEach((m) => {
+      const opt = document.createElement("option");
+      opt.value = m;
+      opt.textContent = m;
+      selectDimMall.appendChild(opt);
+    });
+    if (currentVal && Array.from(selectDimMall.options).some((o) => o.value === currentVal)) {
+      selectDimMall.value = currentVal;
+    }
+  }
+
   async function loadAdminDimensions() {
     showSpinner(true);
     try {
@@ -1030,6 +1061,7 @@ document.addEventListener("DOMContentLoaded", () => {
       allAdminBrands = data.brands || [];
       allAdminAnswerChoices = data.answerChoices || [];
 
+      populateDimMallDropdown();
       renderAdminDimensionsTable();
     } catch (err) {
       showToast("ไม่สามารถโหลดมิติข้อมูลแอดมินได้: " + err.message, "error");
@@ -1038,20 +1070,102 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  selectDimType.addEventListener("change", renderAdminDimensionsTable);
+  selectDimType.addEventListener("change", () => {
+    populateDimMallDropdown();
+    renderAdminDimensionsTable();
+  });
+
+  if (selectDimMall) {
+    selectDimMall.addEventListener("change", renderAdminDimensionsTable);
+  }
 
   function renderAdminDimensionsTable() {
     const dimType = selectDimType.value;
     tblAdminDimensionsBody.innerHTML = "";
 
+    if (wrapperDimMallFilter) {
+      if (dimType === "stores") {
+        wrapperDimMallFilter.style.display = "flex";
+      } else {
+        wrapperDimMallFilter.style.display = "none";
+      }
+    }
+
+    if (dimType === "malls") {
+      const storesSource = allAdminStores.length > 0 ? allAdminStores : allStores;
+      const mallMap = new Map();
+      storesSource.forEach((s) => {
+        if (!s.mall || !s.mall.trim()) return;
+        if (!mallMap.has(s.mall)) {
+          mallMap.set(s.mall, { total: 0, active: 0, stores: [] });
+        }
+        const entry = mallMap.get(s.mall);
+        entry.total += 1;
+        if (s.is_active === 1) entry.active += 1;
+        entry.stores.push(s);
+      });
+
+      const malls = Array.from(mallMap.keys()).sort();
+
+      if (malls.length === 0) {
+        tblAdminDimensionsBody.innerHTML =
+          '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">ไม่มีรายการห้าง/ช่องทางในระบบ</td></tr>';
+        return;
+      }
+
+      malls.forEach((mallName, idx) => {
+        const stats = mallMap.get(mallName);
+        const allActive = stats.active === stats.total;
+        const allInactive = stats.active === 0;
+
+        let statusBadge = "";
+        if (allActive) {
+          statusBadge = `<span style="color: #0284c7; background: var(--badge-bg); padding: 4px 10px; border-radius: 12px; font-weight:600;">Active ทั้งห้าง (${stats.active}/${stats.total} สาขา)</span>`;
+        } else if (allInactive) {
+          statusBadge = `<span style="color: #ef4444; background: rgba(239,68,68,0.15); padding: 4px 10px; border-radius: 12px; font-weight:600;">Inactive ทั้งห้าง (0/${stats.total} สาขา)</span>`;
+        } else {
+          statusBadge = `<span style="color: #eab308; background: rgba(234,179,8,0.15); padding: 4px 10px; border-radius: 12px; font-weight:600;">Active บางสาขา (${stats.active}/${stats.total} สาขา)</span>`;
+        }
+
+        const toggleBtnText = allActive ? "🔴 ปิดใช้งานทั้งห้าง (Disable Whole Customer)" : "🟢 เปิดใช้งานทั้งห้าง (Enable Whole Customer)";
+        const toggleBtnClass = allActive ? "btn-danger" : "btn-accent";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td><strong>🏬 ${mallName}</strong> (รวมทั้งหมด ${stats.total} สาขา)</td>
+          <td>${statusBadge}</td>
+          <td>
+            <button class="btn ${toggleBtnClass} btn-toggle-dim" data-dim="malls" data-mall="${mallName}" data-active="${allActive ? 'true' : 'false'}" style="padding: 6px 12px; font-size: 0.8rem;">
+              ${toggleBtnText}
+            </button>
+          </td>
+        `;
+        tblAdminDimensionsBody.appendChild(tr);
+      });
+
+      attachToggleDimListeners();
+      return;
+    }
+
     let items = [];
-    if (dimType === "stores") items = allAdminStores;
-    if (dimType === "brands") items = allAdminBrands;
-    if (dimType === "answerChoices") items = allAdminAnswerChoices;
+    if (dimType === "stores") {
+      const selectedMall = selectDimMall ? selectDimMall.value : "";
+      if (!selectedMall) {
+        tblAdminDimensionsBody.innerHTML =
+          '<tr><td colspan="4" style="text-align: center; color: var(--primary); font-weight: 600;">👈 กรุณาเลือกห้าง/ช่องทางจากช่องด้านบน เพื่อดูและเปิด/ปิดสาขาในห้างนั้น</td></tr>';
+        return;
+      }
+      items = allAdminStores.filter((s) => s.mall === selectedMall);
+    } else if (dimType === "brands") {
+      items = allAdminBrands;
+    } else if (dimType === "answerChoices") {
+      items = allAdminAnswerChoices;
+    }
 
     if (items.length === 0) {
       tblAdminDimensionsBody.innerHTML =
-        '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">ไม่มีรายการมิติข้อมูล</td></tr>';
+        '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">ไม่มีรายการมิติข้อมูลในหมวดนี้</td></tr>';
       return;
     }
 
@@ -1061,7 +1175,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       let detailText = item.name || item.store_name;
       if (dimType === "stores") {
-        detailText = `[${item.store_code || 'S-'}] ${item.store_name_en || ''} | ${item.store_name} (ห้าง: ${item.mall} | ภูมิภาค: ${item.region})`;
+        detailText = `[${item.store_code || 'S-'}] ${item.store_name_en || ''} | ${item.store_name} (จังหวัด: ${item.province} | ภูมิภาค: ${item.region})`;
       }
 
       const statusBadge = isActive
@@ -1085,10 +1199,19 @@ document.addEventListener("DOMContentLoaded", () => {
       tblAdminDimensionsBody.appendChild(tr);
     });
 
+    attachToggleDimListeners();
+  }
+
+  function attachToggleDimListeners() {
     document.querySelectorAll(".btn-toggle-dim").forEach((btn) => {
       btn.addEventListener("click", async () => {
+        if (currentAuthRole === "viewer") {
+          showToast("สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถแก้ไขได้", "warning");
+          return;
+        }
         const dim = btn.getAttribute("data-dim");
         const id = parseInt(btn.getAttribute("data-id") || "0", 10);
+        const mall = btn.getAttribute("data-mall");
         const currentActive = btn.getAttribute("data-active") === "true";
         const newActive = !currentActive;
 
@@ -1100,7 +1223,7 @@ document.addEventListener("DOMContentLoaded", () => {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${currentAuthToken}`
             },
-            body: JSON.stringify({ dimension: dim, id, isActive: newActive }),
+            body: JSON.stringify({ dimension: dim, id, mall, isActive: newActive }),
           });
 
           const data = await res.json();
@@ -1120,34 +1243,82 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  btnAdminSearch.addEventListener("click", loadAdminSurveys);
-
-  btnAdminExportCSV.addEventListener("click", () => {
-    window.open("/api/admin/export", "_blank");
-  });
-
-  btnAdminClearSurveys.addEventListener("click", async () => {
-    if (!confirm("⚠️ คำเตือน: คุณต้องการล้างข้อมูลแบบสำรวจทั้งหมดในระบบใช่หรือไม่?")) return;
+  // Reset Handlers
+  async function handleResetData(target, label, confirmMsg) {
+    if (currentAuthRole === "viewer") {
+      showToast("สิทธิ์ Viewer อ่านข้อมูลได้อย่างเดียว ไม่สามารถรีเซ็ตข้อมูลได้", "warning");
+      return;
+    }
+    if (!confirm(confirmMsg)) return;
 
     showSpinner(true);
     try {
-      const res = await fetch("/api/admin/clear", {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${currentAuthToken}` }
+      const res = await fetch("/api/admin/reset-dimensions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${currentAuthToken}`
+        },
+        body: JSON.stringify({ target }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        showToast("ล้างข้อมูลแบบสำรวจทั้งหมดในระบบเรียบร้อย", "success");
-        loadExecutiveDashboardStats();
+        showToast(`รีเซ็ตข้อมูล ${label} เรียบร้อยแล้ว`, "success");
+        loadDimensions();
+        loadAdminDimensions();
         loadAdminSurveys();
+        if (currentAuthRole === "admin" || currentAuthRole === "viewer") {
+          loadExecutiveDashboardStats();
+        }
       } else {
-        showToast("เกิดข้อผิดพลาด: " + data.error, "error");
+        showToast("เกิดข้อผิดพลาด: " + (data.error || "Reset failed"), "error");
       }
     } catch (err) {
       showToast("เกิดข้อผิดพลาด: " + err.message, "error");
     } finally {
       showSpinner(false);
     }
+  }
+
+  const btnResetStores = document.getElementById("btnResetStores");
+  const btnResetBrands = document.getElementById("btnResetBrands");
+  const btnResetAnswers = document.getElementById("btnResetAnswers");
+  const btnResetSurveyAnswers = document.getElementById("btnResetSurveyAnswers");
+
+  if (btnResetStores) {
+    btnResetStores.addEventListener("click", () =>
+      handleResetData("stores", "สาขา (Stores)", "⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบมิติข้อมูลสาขา (Stores) ทั้งหมดออกจากฐานข้อมูล?")
+    );
+  }
+
+  if (btnResetBrands) {
+    btnResetBrands.addEventListener("click", () =>
+      handleResetData("brands", "แบรนด์ (Brands)", "⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบมิติข้อมูลแบรนด์ (Brands) ทั้งหมดออกจากฐานข้อมูล?")
+    );
+  }
+
+  if (btnResetAnswers) {
+    btnResetAnswers.addEventListener("click", () =>
+      handleResetData("answers", "ประเภท PC (Answer Choices)", "⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบมิติประเภท PC ทั้งหมดออกจากฐานข้อมูล?")
+    );
+  }
+
+  if (btnResetSurveyAnswers) {
+    btnResetSurveyAnswers.addEventListener("click", () =>
+      handleResetData("surveys", "ผลคำตอบการสำรวจ (Survey Answers)", "⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบผลคำตอบการสำรวจทั้งหมดออกจากฐานข้อมูล?")
+    );
+  }
+
+  if (btnResetDimensions) {
+    btnResetDimensions.addEventListener("click", () =>
+      handleResetData("all", "ทุกมิติและผลสำรวจทั้งหมด", "🔥 คำเตือนขั้นสูง: คุณแน่ใจหรือไม่ว่าต้องการ Reset ลบมิติข้อมูลและผลสำรวจทั้งหมดออกจากฐานข้อมูล D1?")
+    );
+  }
+
+  btnAdminSearch.addEventListener("click", loadAdminSurveys);
+
+  btnAdminExportCSV.addEventListener("click", () => {
+    window.open("/api/admin/export", "_blank");
   });
 
   // CSV Imports
