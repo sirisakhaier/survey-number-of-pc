@@ -221,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     filteredStores.forEach((s) => {
       const opt = document.createElement("option");
-      opt.value = s.id.toString();
+      opt.value = s.store_code || s.id.toString();
       opt.textContent = `${s.store_name} (${s.province})`;
       selectStore.appendChild(opt);
     });
@@ -260,8 +260,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function checkStartSurveyState() {
-    const storeId = parseInt(selectStore.value, 10);
-    currentSelectedStore = allStores.find((s) => s.id === storeId) || null;
+    const storeCode = selectStore.value;
+    currentSelectedStore = allStores.find((s) => (s.store_code || s.id.toString()) === storeCode) || null;
     const hasName = inputUserName.value.trim().length > 0;
     const phone = inputUserPhone.value.trim();
     const validPhone = phone.length === 10 && phone.startsWith("0") && /^\d{10}$/.test(phone);
@@ -290,7 +290,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Check if store already has existing survey
     showSpinner(true);
     try {
-      const res = await fetch(`/api/survey/${currentSelectedStore.id}`);
+      const storeKey = currentSelectedStore.store_code || currentSelectedStore.id.toString();
+      const res = await fetch(`/api/survey/${encodeURIComponent(storeKey)}`);
       const data = await res.json();
 
       if (data.exists) {
@@ -600,7 +601,7 @@ document.addEventListener("DOMContentLoaded", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          storeId: currentSelectedStore.id,
+          storeId: currentSelectedStore.store_code || currentSelectedStore.id.toString(),
           user: userName,
           phone: userPhone,
           details,
@@ -908,10 +909,10 @@ document.addEventListener("DOMContentLoaded", () => {
           filterAdminRegion.appendChild(opt);
         });
 
-        filterAdminStore.innerHTML = '<option value="">-- ทุกสาขา --</option>';
+        filterAdminStore.innerHTML = '<option value="">ทุกสาขา (all)</option>';
         filtered.forEach((s) => {
           const opt = document.createElement("option");
-          opt.value = s.id.toString();
+          opt.value = s.store_code || s.id.toString();
           opt.textContent = `${s.store_name} (${s.province})`;
           filterAdminStore.appendChild(opt);
         });
@@ -932,7 +933,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     allStores.forEach((s) => {
       const opt = document.createElement("option");
-      opt.value = s.id.toString();
+      opt.value = s.store_code || s.id.toString();
       opt.textContent = `${s.store_name} (${s.mall})`;
       filterAdminStore.appendChild(opt);
     });
@@ -965,7 +966,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tblAdminSurveysBody.innerHTML = "";
       if (!data.results || data.results.length === 0) {
         tblAdminSurveysBody.innerHTML =
-          '<tr><td colspan="12" style="text-align: center; color: var(--text-muted);">ไม่พบข้อมูลแบบสำรวจตามเงื่อนไขที่เลือก</td></tr>';
+          '<tr><td colspan="10" style="text-align: center; color: var(--text-muted);">ไม่พบข้อมูลแบบสำรวจตามเงื่อนไขที่เลือก</td></tr>';
         return;
       }
 
@@ -987,12 +988,10 @@ document.addEventListener("DOMContentLoaded", () => {
           <td style="font-weight:600;">${row.store_name_en || "-"}</td>
           <td style="font-weight:600;">${row.store_name || "-"}</td>
           <td>${row.mall || "-"}</td>
-          <td>${row.region || "-"}</td>
           <td>${row.user || "user"}</td>
           <td>${row.phone || "-"}</td>
           <td>${lastUpdateStr}</td>
           <td style="font-weight: bold; color: var(--primary); text-align: center;">${row.total_pc ?? 0} คน</td>
-          <td style="font-size: 0.8rem; color: var(--text-main);">${row.summary || '<span style="color:var(--text-muted)">ไม่มีพนักงาน PC</span>'}</td>
           <td>${deleteCellContent}</td>
         `;
         tblAdminSurveysBody.appendChild(tr);
@@ -1371,6 +1370,21 @@ document.addEventListener("DOMContentLoaded", () => {
   btnImportAnswers.addEventListener("click", () =>
     handleCSVUpload(fileAnswerCSV, "/api/admin/import/answers", "Answers")
   );
+
+  // Export dimension CSV handlers
+  const btnExportStores = document.getElementById("btnExportStores");
+  const btnExportBrands = document.getElementById("btnExportBrands");
+  const btnExportAnswers = document.getElementById("btnExportAnswers");
+
+  if (btnExportStores) {
+    btnExportStores.addEventListener("click", () => window.open("/api/admin/export/stores", "_blank"));
+  }
+  if (btnExportBrands) {
+    btnExportBrands.addEventListener("click", () => window.open("/api/admin/export/brands", "_blank"));
+  }
+  if (btnExportAnswers) {
+    btnExportAnswers.addEventListener("click", () => window.open("/api/admin/export/answers", "_blank"));
+  }
 
   btnResetDimensions.addEventListener("click", async () => {
     if (

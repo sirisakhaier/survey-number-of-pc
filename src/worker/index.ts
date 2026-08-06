@@ -101,17 +101,25 @@ export default {
         return jsonResponse({ stores: results || [] });
       }
 
-      // 3. GET /api/survey/:storeId - Load survey data for store
+      // 3. GET /api/survey/:storeCode - Load survey data for store (accepts store_code string)
       if (method === "GET" && path.startsWith("/api/survey/")) {
-        const storeIdStr = path.replace("/api/survey/", "");
-        const storeId = parseInt(storeIdStr, 10);
-        if (isNaN(storeId)) {
-          return jsonResponse({ error: "Invalid store ID" }, 400);
+        const storeCodeStr = decodeURIComponent(path.replace("/api/survey/", "")).trim();
+        if (!storeCodeStr) {
+          return jsonResponse({ error: "Invalid store code" }, 400);
+        }
+
+        // Resolve store_code -> internal id
+        const storeRow: any = await env.DB.prepare(
+          "SELECT id FROM stores WHERE store_code = ?"
+        ).bind(storeCodeStr).first();
+
+        if (!storeRow) {
+          return jsonResponse({ exists: false, details: [] });
         }
 
         const header: any = await env.DB.prepare(
           "SELECT id, store_id, last_update, user, phone FROM survey_header WHERE store_id = ?"
-        ).bind(storeId).first();
+        ).bind(storeRow.id).first();
 
         if (!header) {
           return jsonResponse({ exists: false, details: [] });
@@ -128,15 +136,25 @@ export default {
         });
       }
 
-      // 4. POST /api/survey - Save survey (filter out 0 values)
+      // 4. POST /api/survey - Save survey (accepts storeCode string, resolves to internal id)
       if (method === "POST" && path === "/api/survey") {
         const body: any = await request.json();
-        const { storeId, user, phone, details } = body;
+        const { storeId: storeCode, user, phone, details } = body;
 
-        if (!storeId || !Array.isArray(details)) {
+        if (!storeCode || !Array.isArray(details)) {
           return jsonResponse({ error: "Missing storeId or details array" }, 400);
         }
 
+        // Resolve store_code -> internal stores.id
+        const storeRow: any = await env.DB.prepare(
+          "SELECT id FROM stores WHERE store_code = ?"
+        ).bind(String(storeCode)).first();
+
+        if (!storeRow) {
+          return jsonResponse({ error: `Store not found for code: ${storeCode}` }, 404);
+        }
+
+        const internalStoreId = storeRow.id;
         const userName = user && user.trim() ? user.trim() : "user";
         const phoneNum = phone && phone.trim() ? phone.trim() : "";
         const now = new Date().toISOString();
@@ -144,7 +162,7 @@ export default {
         // Check existing header
         let header: any = await env.DB.prepare(
           "SELECT id FROM survey_header WHERE store_id = ?"
-        ).bind(storeId).first();
+        ).bind(internalStoreId).first();
 
         let surveyId: number;
 
@@ -156,7 +174,7 @@ export default {
         } else {
           const res = await env.DB.prepare(
             "INSERT INTO survey_header (store_id, last_update, user, phone) VALUES (?, ?, ?, ?)"
-          ).bind(storeId, now, userName, phoneNum).run();
+          ).bind(internalStoreId, now, userName, phoneNum).run();
           surveyId = res.meta.last_row_id;
         }
 
@@ -495,7 +513,7 @@ export default {
       if (method === "GET" && path === "/api/admin/surveys") {
         const mallFilter = url.searchParams.get("mall");
         const regionFilter = url.searchParams.get("region");
-        const storeFilter = url.searchParams.get("storeId");
+        const storeFilter = url.searchParams.get("storeId"); // now store_code string
         const brandFilter = url.searchParams.get("brandId");
 
         let query = `
@@ -505,14 +523,12 @@ export default {
             s.store_code,
             s.store_name_en,
             s.store_name,
-            s.region,
             s.mall,
             s.province,
             sh.last_update,
             sh.user,
             sh.phone,
-            COALESCE(SUM(sd.value), 0) as total_pc,
-            GROUP_CONCAT(b.name || ' (' || ac.name || '=' || sd.value || ')', ', ') as summary
+            COALESCE(SUM(sd.value), 0) as total_pc
           FROM survey_header sh
           JOIN stores s ON sh.store_id = s.id
           LEFT JOIN survey_detail sd ON sh.id = sd.survey_id AND sd.value > 0
@@ -531,15 +547,16 @@ export default {
           params.push(regionFilter);
         }
         if (storeFilter) {
-          query += " AND s.id = ?";
-          params.push(parseInt(storeFilter, 10));
+          // filter by store_code string
+          query += " AND s.store_code = ?";
+          params.push(storeFilter);
         }
         if (brandFilter) {
           query += " AND sh.id IN (SELECT survey_id FROM survey_detail WHERE brand_id = ? AND value > 0)";
           params.push(parseInt(brandFilter, 10));
         }
 
-        query += " GROUP BY sh.id ORDER BY sh.last_update DESC, s.mall, s.region, s.store_name";
+        query += " GROUP BY sh.id ORDER BY sh.last_update DESC, s.mall, s.store_name";
 
         const stmt = env.DB.prepare(query);
         const { results } = params.length > 0 ? await stmt.bind(...params).all() : await stmt.all();
@@ -547,7 +564,7 @@ export default {
         return jsonResponse({ results: results || [] });
       }
 
-      // 13. GET /api/admin/export - STORE_ID (e.g. S00913), STORE_NAME (English), ชื่อสาขา (Thai)
+      // 13. GET /api/admin/export - Survey results CSV (STORE_ID, STORE_NAME, etc.)
       if (method === "GET" && path === "/api/admin/export") {
         const query = `
           SELECT 
@@ -598,6 +615,80 @@ export default {
           headers: {
             "Content-Type": "text/csv; charset=utf-8",
             "Content-Disposition": "attachment; filename=survey_results.csv",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      // 13b. GET /api/admin/export/stores - Export current stores dimension as CSV
+      if (method === "GET" && path === "/api/admin/export/stores") {
+        const { results } = await env.DB.prepare(
+          "SELECT store_name, mall, province, region, store_code, store_name_en FROM stores ORDER BY mall, region, store_name"
+        ).all();
+
+        let csv = "\uFEFFชื่อสาขา,ห้าง,จังหวัด,ภูมิภาค,STORE_ID,STORE_NAME\n";
+        if (results) {
+          for (const r of results as any[]) {
+            const line = [
+              `"${r.store_name || ''}"`,
+              `"${r.mall || ''}"`,
+              `"${r.province || ''}"`,
+              `"${r.region || ''}"`,
+              `"${r.store_code || ''}"`,
+              `"${r.store_name_en || ''}"`
+            ].join(",");
+            csv += line + "\n";
+          }
+        }
+
+        return new Response(csv, {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": "attachment; filename=stores.csv",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      // 13c. GET /api/admin/export/brands - Export current brands dimension as CSV
+      if (method === "GET" && path === "/api/admin/export/brands") {
+        const { results } = await env.DB.prepare(
+          "SELECT name FROM brands ORDER BY id"
+        ).all();
+
+        let csv = "\uFEFFBrand\n";
+        if (results) {
+          for (const r of results as any[]) {
+            csv += `"${(r.name || '').replace(/"/g, '""')}"\n`;
+          }
+        }
+
+        return new Response(csv, {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": "attachment; filename=brands.csv",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      // 13d. GET /api/admin/export/answers - Export current answer choices as CSV
+      if (method === "GET" && path === "/api/admin/export/answers") {
+        const { results } = await env.DB.prepare(
+          "SELECT name FROM answer_choices ORDER BY id"
+        ).all();
+
+        let csv = "\uFEFFAnswer Choice\n";
+        if (results) {
+          for (const r of results as any[]) {
+            csv += `"${(r.name || '').replace(/"/g, '""')}"\n`;
+          }
+        }
+
+        return new Response(csv, {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": "attachment; filename=answer_choices.csv",
             "Access-Control-Allow-Origin": "*",
           },
         });
