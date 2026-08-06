@@ -1174,7 +1174,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       let detailText = item.name || item.store_name;
       if (dimType === "stores") {
-        detailText = `[${item.store_code || 'S-'}] ${item.store_name_en || ''} | ${item.store_name} (จังหวัด: ${item.province} | ภูมิภาค: ${item.region})`;
+        detailText = `${item.store_name_en || ''} | ${item.store_name} (จังหวัด: ${item.province} | ภูมิภาค: ${item.region})`;
       }
 
       const statusBadge = isActive
@@ -1184,8 +1184,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const toggleBtnText = isActive ? "🔴 ปิดใช้งาน (Disable)" : "🟢 เปิดใช้งาน (Enable)";
       const toggleBtnClass = isActive ? "btn-danger" : "btn-accent";
 
+      // For stores: show store_code as visible primary key; for brands/choices: show item.id
+      const displayId = dimType === "stores" ? (item.store_code || item.id) : item.id;
+
       tr.innerHTML = `
-        <td>${item.id}</td>
+        <td><strong style="color: var(--primary);">${displayId}</strong></td>
         <td>${detailText}</td>
         <td>${statusBadge}</td>
         <td>
